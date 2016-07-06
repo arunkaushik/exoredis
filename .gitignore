@@ -1,0 +1,4 @@
+# Ignore binary file
+redis_server
+a.out
+*/*.out
