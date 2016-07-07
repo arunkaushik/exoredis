@@ -21,9 +21,9 @@ listNode* newNode(exoString *key, exoVal *value){
     return tmp;
 }
 
-int addNodeToList(linkedList *list, listNode *node){
+listNode* addNodeToList(linkedList *list, listNode *node){
     if(list == NULL || node == NULL){
-        return -1;
+        return NULL;
     } else {
         if(list->head){
             list->tail->next = node;
@@ -34,7 +34,7 @@ int addNodeToList(linkedList *list, listNode *node){
             list->tail = list->head;
         }
         list->size++;
-        return 0;
+        return node;
     } 
 }
 
@@ -65,15 +65,15 @@ listNode* findNode(linkedList *list, exoString *key){
     return NULL;
 }
 
-int replaceNodeValue(listNode *node, exoVal *newval){
+exoVal* replaceNodeValue(listNode *node, exoVal *newval){
     if(node == NULL || newval == NULL){
-        return -1;
+        return NULL;
     } else {
         exoVal *tmp;
         tmp = node->value;
         node->value = newval;
         free(tmp);
-        return 0;
+        return newval;
     }
 }
 

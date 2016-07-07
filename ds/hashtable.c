@@ -22,66 +22,70 @@ exoVal* get(hashTable* ht, exoString* key){
     return node ? node->value : NULL;
 }
 
-int set(hashTable* ht, exoString* key, exoVal* val){
+exoVal* set(hashTable* ht, exoString* key, exoVal* val){
     size_t str_hash = stringHash(key->buf);
     listNode* node = getListNode(ht, key);
     if(node){
         return replaceNodeValue(node, val);
     } else {
         node = newNode(key, val);
-        return addNodeToList(ht->buckets[str_hash], node);
-    }
-}
-
-int main(){
-    hashTable *table = newHashTable(INITIAL_SIZE);
-    char key[1000], val[1000], f[1000];
-    linkedList *list;
-    exoString *k, *v, *find, *tmp_val;
-    exoVal *value;
-    unsigned long l;
-    int n,t,i;
-    scanf("%d %d", &n, &t);
-    while(n--){
-        scanf("%s", key);
-        scanf("%s", val);
-        l = strlen(key);
-        k = newString((void *)key, l);
-        l = strlen(val);
-        v = newString((void *)val, l);
-        value = newExoVal(EXOSTRING, (void *)v);
-        set(table, k, value);
-    }
-    for(i = 0; i < INITIAL_SIZE; i++){
-        printList(table->buckets[i]);
-        printf("%s\n", "----------------");
-    }
-    printf("%s\n", "PRINTING AGAIN");
-
-    for(i = 0; i < INITIAL_SIZE; i++){
-        printList(table->buckets[i]);
-        printf("%s\n", "----------------");
-    }
-
-    while(t--){
-        scanf("%s", f);
-        l = strlen(f);
-        find = newString((void *)f, l);
-        value = get(table, find);
-        if(value){
-            exoString *tmp_val = (exoString *)value->val_obj;
-            printf("%s\n", tmp_val->buf);
+        if(addNodeToList(ht->buckets[str_hash], node)){
+            return val;
         } else {
-            printf("%s\n", "NOT FOUND" );
+            return NULL;
         }
     }
-
-    printf("%s\n", "PRINTING AGAIN");
-    
-    for(i = 0; i < INITIAL_SIZE; i++){
-        printList(table->buckets[i]);
-        printf("%s\n", "----------------");
-    }
-
-    return 0;
 }
+
+// int main(){
+//     hashTable *table = newHashTable(INITIAL_SIZE);
+//     char key[1000], val[1000], f[1000];
+//     linkedList *list;
+//     exoString *k, *v, *find, *tmp_val;
+//     exoVal *value;
+//     unsigned long l;
+//     int n,t,i;
+//     scanf("%d %d", &n, &t);
+//     while(n--){
+//         scanf("%s", key);
+//         scanf("%s", val);
+//         l = strlen(key);
+//         k = newString((void *)key, l);
+//         l = strlen(val);
+//         v = newString((void *)val, l);
+//         value = newExoVal(EXOSTRING, (void *)v);
+//         set(table, k, value);
+//     }
+//     for(i = 0; i < INITIAL_SIZE; i++){
+//         printList(table->buckets[i]);
+//         printf("%s\n", "----------------");
+//     }
+//     printf("%s\n", "PRINTING AGAIN");
+
+//     for(i = 0; i < INITIAL_SIZE; i++){
+//         printList(table->buckets[i]);
+//         printf("%s\n", "----------------");
+//     }
+
+//     while(t--){
+//         scanf("%s", f);
+//         l = strlen(f);
+//         find = newString((void *)f, l);
+//         value = get(table, find);
+//         if(value){
+//             exoString *tmp_val = (exoString *)value->val_obj;
+//             printf("%s\n", tmp_val->buf);
+//         } else {
+//             printf("%s\n", "NOT FOUND" );
+//         }
+//     }
+
+//     printf("%s\n", "PRINTING AGAIN");
+    
+//     for(i = 0; i < INITIAL_SIZE; i++){
+//         printList(table->buckets[i]);
+//         printf("%s\n", "----------------");
+//     }
+
+//     return 0;
+// }

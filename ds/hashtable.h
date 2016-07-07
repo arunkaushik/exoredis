@@ -10,6 +10,6 @@ typedef struct hashTable{
 hashTable* newHashTable(size_t);
 listNode* getListNode(hashTable*, exoString*);
 exoVal* get(hashTable*, exoString*);
-int set(hashTable*, exoString*, exoVal*);
+exoVal* set(hashTable*, exoString*, exoVal*);
 
 #endif
