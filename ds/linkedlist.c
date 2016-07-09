@@ -1,5 +1,8 @@
 #include "linkedlist.h"
 
+/*
+returns a new empty linked list
+*/
 linkedList* newLinkedList(){
     linkedList* ll = (linkedList*)malloc(sizeof(linkedList));
     if(ll){
@@ -7,9 +10,13 @@ linkedList* newLinkedList(){
         ll->tail = NULL;
         ll->size = 0;
     }
+    printf(GRN "new linkedList created\n" RESET);
     return ll;
 }
 
+/*
+return a new list node with given key value pair
+*/
 listNode* newNode(exoString *key, exoVal *value){
     listNode* tmp = (listNode*)malloc(sizeof( listNode));
     if(tmp){
@@ -18,12 +25,17 @@ listNode* newNode(exoString *key, exoVal *value){
         tmp->next = NULL;
         tmp->prev = NULL;
     }
+    printf("%s %s\n", GRN "new listNode created with key: " RESET, key->buf);
     return tmp;
 }
 
+/*
+adds list node to the given list
+*/
 listNode* addNodeToList(linkedList *list, listNode *node){
     if(list == NULL || node == NULL){
         return NULL;
+        printf(GRN "node NOT added to List\n" RESET);
     } else {
         if(list->head){
             list->tail->next = node;
@@ -34,10 +46,15 @@ listNode* addNodeToList(linkedList *list, listNode *node){
             list->tail = list->head;
         }
         list->size++;
+        printf("%s %s\n", GRN "node with key added to List : " RESET, node->key->buf);
         return node;
     } 
 }
 
+/*
+prints the list with its size to STDOUT
+Values are printed only if they are exoString, otherwise only key is printed
+*/
 void printList(linkedList *list){
     listNode *tmp = list->head;
     exoString *tmp_val;
@@ -54,6 +71,9 @@ void printList(linkedList *list){
         free(tmp);
 }
 
+/*
+finds a node with specific key in given list 
+*/
 listNode* findNode(linkedList *list, exoString *key){
     listNode* tmp = list->head;
     while(tmp){
@@ -62,59 +82,46 @@ listNode* findNode(linkedList *list, exoString *key){
         }
         tmp = tmp->next;
     }
+    printf("%s %s\n", GRN "node find called with key: " RESET, key->buf);
     return NULL;
 }
 
+/*
+replaces the value in a given list node with new value.
+value is a object of exoVal data type
+*/
 exoVal* replaceNodeValue(listNode *node, exoVal *newval){
     if(node == NULL || newval == NULL){
         return NULL;
+        printf(GRN "node value Not replaced\n" RESET);
     } else {
         exoVal *tmp;
         tmp = node->value;
         node->value = newval;
         free(tmp);
+        printf("%s %s\n", GRN "Node value replaced for node with key: " RESET, node->key->buf);
         return newval;
     }
 }
 
-// int main(){
-//     char key[1000], val[1000], f[1000];
-//     listNode *node;
-//     linkedList *list = newLinkedList();
-//     exoString *k, *v, *find, *tmp_val;
-//     exoVal *val_obj;
-//     unsigned long l;
-//     int n,t;
-//     scanf("%d %d", &n, &t);
-//     while(n--){
-//         scanf("%s", key);
-//         scanf("%s", val);
-//         l = strlen(key);
-//         k = newString((void *)key, l);
-//         l = strlen(val);
-//         v = newString((void *)val, l);
-//         val_obj = newExoVal(EXOSTRING, (void *)v);
-//         node = newNode(k, val_obj);
-//         addNodeToList(list, node);
-//     }
-//     printList(list);
-//     printf("%s\n", "PRINTING AGAIN");
-//     printList(list);
+/*
+frees all the memory holded my given linkedlist
+*/
+void freeLinkedList(linkedList* list){
+    listNode* node = list->tail;
+    listNode* tmp;
+    while(node){
+        tmp = node->prev;
+        freeListNode(node);
+        node = tmp;
+    }
+}
 
-//     while(t--){
-//         scanf("%s", f);
-//         l = strlen(f);
-//         find = newString((void *)f, l);
-//         node = findNode(list, find);
-//         if(node){
-//             exoString *tmp_val = (exoString *)node->value->val_obj;
-//             printf("%s %s\n", node->key->buf, tmp_val->buf);
-//         } else {
-//             printf("%s\n", "NOT FOUND" );
-//         }
-//     }
-
-//     printf("%s\n", "PRINTING AGAIN");
-//     printList(list);
-//     return 0;
-// }
+/*
+frees the memory holded by given listnode
+*/
+void freeListNode(listNode *node){
+    freeExoString(node->key);
+    freeExoVal(node->value);
+    free(node);
+}

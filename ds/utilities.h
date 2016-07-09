@@ -21,5 +21,12 @@ exoString* newString(void *, unsigned long);
 exoVal* newExoVal(size_t, void *);
 void printString(exoString*);
 size_t stringHash(char *);
+void freeExoString(exoString*);
+void freeExoVal(exoVal*);
+exoString* upCase(exoString*);
+void strUpCase(char *);
+exoString* returnError(int);
+exoString* returnNull();
+exoString* returnOK();
 
 #endif

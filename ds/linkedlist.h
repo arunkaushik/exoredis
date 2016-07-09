@@ -21,5 +21,6 @@ listNode * addNodeToList(linkedList *, listNode *);
 listNode* findNode(linkedList *, exoString *);
 exoVal* replaceNodeValue(listNode *, exoVal *);
 void printList(linkedList *);
-
+void freeListNode(listNode *);
+void freeLinkedList(linkedList*);
 #endif

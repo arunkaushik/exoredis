@@ -8,8 +8,11 @@ typedef struct hashTable{
 }hashTable;
 
 hashTable* newHashTable(size_t);
-listNode* getListNode(hashTable*, exoString*);
 exoVal* get(hashTable*, exoString*);
 exoVal* set(hashTable*, exoString*, exoVal*);
+void freeHashTable(hashTable*);
+
+hashTable *COMMANDS;
+hashTable *HASH_TABLE;
 
 #endif
