@@ -1,47 +1,123 @@
 #include "redisserver.h"
 
 int main(){
-  unsigned long bytesread;
-  exoString *result;
-  unsigned long buffSize = 1000;
-  char buf[buffSize];
-  linkedList* tokens = NULL;
+ // binding save method on exit signal
+    signal(SIGINT, sig_handler);
 
-  // binding save method on exit signal
-  signal(SIGINT, sig_handler);
-
-  ConnectFD = createSocket(PORT);
-  if (ConnectFD == -1) {
-    perror("Socket Creation Failed");
-    return (EXIT_FAILURE);
-  }
-
-  /*
-    Initialize command table hash in COMMANDS global var
-    It contains all the API exposed to clients 
-  */
     COMMANDS = initializeCmdTable();
 
     HASH_TABLE = newHashTable(INITIAL_SIZE);
 
-    while(1){
-        bytesread = read(ConnectFD, buf, buffSize);
-
-        // have to implement RESP parser. Intelligence to choose
-        // right parser based on the string read from client
-        tokens = bufferTokenizer(buf, bytesread-1);
-
-        result = commandDispatcher(tokens);
-
-        if(result){
-            result->buf[result->len] = '\n';
-            if(write(ConnectFD,result->buf,result->len+1) < 0 ){
-                perror("ERROR writing to socket");
-            }
-        }
-    }
+    spinServer();
 
     return EXIT_SUCCESS; 
+}
+
+int spinServer(){
+    run();
+    return 0;
+}
+
+void run(){
+    evutil_socket_t listener;
+    struct sockaddr_in sin;
+    struct event_base *base;
+    struct event *listener_event;
+
+    base = event_base_new();
+    if (!base)
+        return; /*XXXerr*/
+
+    sin.sin_family = AF_INET;
+    sin.sin_addr.s_addr = 0;
+    sin.sin_port = htons(SERVER_PORT);
+
+    listener = socket(AF_INET, SOCK_STREAM, 0);
+    evutil_make_socket_nonblocking(listener);
+
+    if (bind(listener, (struct sockaddr*)&sin, sizeof(sin)) < 0) {
+        perror("bind");
+        return;
+    }
+
+    if (listen(listener, 16)<0) {
+        perror("listen");
+        return;
+    }
+
+    listener_event = event_new(base, listener, EV_READ|EV_PERSIST, do_accept, (void*)base);
+    /*XXX check it */
+    event_add(listener_event, NULL);
+
+    event_base_dispatch(base);
+}
+
+void do_accept(evutil_socket_t listener, short event, void *arg){
+    struct event_base *base = arg;
+    struct sockaddr_storage ss;
+    socklen_t slen = sizeof(ss);
+    int fd = accept(listener, (struct sockaddr*)&ss, &slen);
+    if (fd < 0) {
+        perror("accept");
+    } else if (fd > FD_SETSIZE) {
+        close(fd);
+    } else {
+        struct bufferevent *bev;
+        evutil_make_socket_nonblocking(fd);
+        bev = bufferevent_socket_new(base, fd, BEV_OPT_CLOSE_ON_FREE);
+        bufferevent_setcb(bev, readcb, NULL, errorcb, NULL);
+        bufferevent_setwatermark(bev, EV_READ, 0, MAX_LINE);
+        bufferevent_enable(bev, EV_READ|EV_WRITE);
+    }
+}
+
+void readcb(struct bufferevent *bev, void *ctx){
+    unsigned long bytesread, buffSize = 100000;
+    linkedList* tokens = NULL;
+    exoString *result;
+    char buf[buffSize];
+    struct evbuffer *input, *output;
+    input = bufferevent_get_input(bev);
+    output = bufferevent_get_output(bev);
+
+    // assuming bytesread < buffSize
+    bytesread = evbuffer_get_length(input);
+    evbuffer_remove(input, buf, bytesread);
+
+    tokens = bufferTokenizer(buf, bytesread-1);
+
+    result = commandDispatcher(tokens);
+
+    evbuffer_add(output, result->buf, result->len);
+    // for now, will remove later
+    evbuffer_add(output, "\n", 1);
+
+    // if (evbuffer_get_length(input) >= MAX_LINE) {
+    //     /* Too long; just process what there is and go on so that the buffer
+    //      * doesn't grow infinitely long. */
+    //     char buf[1024];
+    //     while (evbuffer_get_length(input)) {
+    //         int n = evbuffer_remove(input, buf, sizeof(buf));
+    //         for (i = 0; i < n; ++i)
+    //             buf[i] = rot13_char(buf[i]);
+    //         evbuffer_add(output, buf, n);
+    //     }
+    //     evbuffer_add(output, "\n", 1);
+    // }
+}
+
+void errorcb(struct bufferevent *bev, short error, void *ctx){
+    if (error & BEV_EVENT_EOF) {
+        /* connection has been closed, do any clean up here */
+        /* ... */
+    } else if (error & BEV_EVENT_ERROR) {
+        /* check errno to see what error occurred */
+        /* ... */
+    } else if (error & BEV_EVENT_TIMEOUT) {
+        /* must be a timeout event handle, handle it */
+        /* ... */
+    }
+    bufferevent_free(bev);
 }
 
 /*
@@ -112,7 +188,8 @@ It shuts down the server after writing all the stored data in rdb file for persi
 */
 int shutdownServer(){
     printf(" %s\n","Shutting Down server...");
-    return shutdownSocketConnection(ConnectFD, SocketFD);
+    // here we have to free any TCP port that we are holding << 1500 >>
+    return 0;
 }
 
 /*

@@ -1,7 +1,7 @@
 #ifndef CONSTANTS_H_   /* Include guard */
 #define CONSTANTS_H_
 
-#define PORT 1500
+#define SERVER_PORT 1500
 #define INITIAL_SIZE 64
 
 #define FAILURE -1

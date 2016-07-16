@@ -13,4 +13,5 @@ server: server/redisserver.c \
             ds/commands.c \
             protocol/resp.c \
             tcpsocket/soket.c \
-            server/redisserver.c
+            server/redisserver.c -levent
+            
