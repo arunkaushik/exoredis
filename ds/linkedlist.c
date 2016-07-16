@@ -108,6 +108,7 @@ exoVal* replaceNodeValue(listNode *node, exoVal *newval){
 frees all the memory holded my given linkedlist
 */
 void freeLinkedList(linkedList* list){
+    if(list == NULL) return;
     listNode* node = list->tail;
     listNode* tmp;
     while(node){

@@ -29,7 +29,7 @@ int main(){
 
         // have to implement RESP parser. Intelligence to choose
         // right parser based on the string read from client
-        tokens = simpleTokenizer(buf, bytesread-1);
+        tokens = bufferTokenizer(buf, bytesread-1);
 
         result = commandDispatcher(tokens);
 
@@ -70,7 +70,7 @@ If compliant, it sends of the args to the function pointer
 store in the exoCmd struct. Else it retrun WRONG_NUMBER_OF_ARGUMENTS err
 */
 exoString* executeCommand(exoCmd* cmd, linkedList* tokens){
-    if(validArgs(cmd->args_count, tokens->size -1)){
+    if(validArgs(cmd->args_count, tokens->size -1, cmd->variable_arg_count)){
         return cmd->f_ptr(tokens);
     } else {
         returnError(WRONG_NUMBER_OF_ARGUMENTS);
@@ -81,11 +81,11 @@ exoString* executeCommand(exoCmd* cmd, linkedList* tokens){
 /*
 Utility function used by executeCommand
 */
-bool validArgs(size_t arg_count, unsigned long args_passed){
+bool validArgs(size_t arg_count, unsigned long args_passed, bool variable_args){
     printf("%s %zu %lu\n", WHT "validArgs called with: " RESET, arg_count, args_passed);
     if(arg_count == args_passed){
         return true;
-    } else if(args_passed){
+    } else if(args_passed && variable_args){
         return args_passed % arg_count ? false : true;
     }
     return false;

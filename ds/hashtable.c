@@ -50,6 +50,7 @@ exoVal* set(hashTable* ht, exoString* key, exoVal* val){
 frees all the memory holded my hash_table
 */
 void freeHashTable(hashTable* ht){
+    if(ht == NULL) return;
     unsigned long i;
     for(i = 0; i < ht->size; i++){
         freeLinkedList(ht->buckets[i]);

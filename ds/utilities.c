@@ -68,14 +68,18 @@ size_t stringHash(char *str){
 Frees memory holded by exoVal object
 */
 void freeExoVal(exoVal* val){
-    free(val);
+    if(val){
+        free(val);
+    }
 }
 
 /*
 Frees memory holded by exoString object
 */
 void freeExoString(exoString* str){
-    free(str);
+    if(str){
+        free(str);
+    }
 }
 
 /*
