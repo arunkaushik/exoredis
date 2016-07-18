@@ -84,14 +84,20 @@ void readcb(struct bufferevent *bev, void *ctx){
     bytesread = evbuffer_get_length(input);
     evbuffer_remove(input, buf, bytesread);
 
-    tokens = bufferTokenizer(buf, bytesread-1);
+    tokens = bufferTokenizer(buf, bytesread);
 
     result = commandDispatcher(tokens);
 
-    evbuffer_add(output, result->buf, result->len);
+    if(result){
+        evbuffer_add(output, result->buf, result->len);        
+    }
     // for now, will remove later
+    // Have to implement resp returns
     evbuffer_add(output, "\n", 1);
 
+    // ****** BELOW CODE IS FOR HANDLEING BUFFER LIMITATIONS
+    // ************** HAVE TO LOOK INTO IT *****************
+    
     // if (evbuffer_get_length(input) >= MAX_LINE) {
     //     /* Too long; just process what there is and go on so that the buffer
     //      * doesn't grow infinitely long. */

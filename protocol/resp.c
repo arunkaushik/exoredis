@@ -14,11 +14,20 @@ string is illegal according to RESP
 */
 
 linkedList* bufferTokenizer(char *str, unsigned long len){
-    linkedList* tokens = NULL;
-    if(len > 0){
-        tokens = *str == '*' ? respTokenizer(str, len) : simpleTokenizer(str, len);
+    // empty string case, return NULL
+    if(len < 1) return NULL;
+
+    if(*str == '*'){
+        // If it starts with a * it must be a RESP string (from redis client)
+        printf(MAG "-------------------------- RESP TOKENIZER BEGINS ----------------------\n" RESET);
+        return respTokenizer(str, len);
+        printf(MAG "-------------------------- RESP TOKENIZER ENDS ------------------------\n" RESET);
+    } else {
+        // if doesn't starts with a * it must be a simple string (from telnet)
+        printf(MAG "-------------------------- SIMPLE TOKENIZER BEGINS --------------------\n" RESET);
+        return simpleTokenizer(str, len);
+        printf(MAG "-------------------------- SIMPLE TOKENIZER ENDS ----------------------\n" RESET);
     }
-    return tokens;
 }
 
 linkedList* respTokenizer(char *str, unsigned long len){
@@ -65,7 +74,6 @@ linkedList* respTokenizer(char *str, unsigned long len){
             }
             
         } else {
-            //printf("%s\n", "RETURNING NULLLLLLLLLLL");
             return NULL;
         }
         l = getRespInt(str, start, len);
@@ -81,11 +89,9 @@ linkedList* respTokenizer(char *str, unsigned long len){
                 return NULL;
             }
         } else {
-            //printf("%s\n", "RETURNING NULLLLLLLLLLL");
             return NULL;
         }
-        if(*str != '\r') return NULL;
-        //printf("%s %d %ld %lu\n", "BIN THE ENDDDDDDDD: ", c, str - start, num); 
+        if(*str != '\r') return NULL; 
     }
     if(!num && str - start == len - 1){
         return tokens;
@@ -96,7 +102,6 @@ linkedList* respTokenizer(char *str, unsigned long len){
 
 unsigned long getRespInt(char *str, char *start, unsigned long len){
     unsigned long l = 0;
-
     while(*str != '\r') {
         // return -1 if illegal byte in sequence
         if(str - start >= len || *str < '0' || *str > '9'){
@@ -105,7 +110,6 @@ unsigned long getRespInt(char *str, char *start, unsigned long len){
         l = (l*10)+(*str - '0');
         str++;
     }
-    //printf("%lu\n", l);
     if(str + 1 - start < len && *(str + 1) != '\n'){
         return -1;
     } else {
@@ -129,8 +133,6 @@ linkedList* simpleTokenizer(char *str, unsigned long len){
     if(len < 2){
         return NULL;
     }
-
-    printf(MAG "-------------------------- SIMPLE TOKENIZER BEGIN ------------------------\n" RESET);
 
     linkedList* tokens = newLinkedList();
     listNode* node;
@@ -158,8 +160,6 @@ linkedList* simpleTokenizer(char *str, unsigned long len){
         }
         str = runner;
     }
-
-    printf(MAG "-------------------------- SIMPLE TOKENIZER ENDS ------------------------\n" RESET);
     return tokens;
 }
 
