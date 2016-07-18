@@ -81,13 +81,17 @@ Have to write to handle n*2 arguments
 */
 exoString* setCommand(linkedList* args){
     printf(CYN "setCommand Called\n" RESET);
-    listNode* node = args->head;
-    exoString* key = node->next->key;
-    exoVal* val = newExoVal(EXOSTRING, node->next->next->key);
-    val = set(HASH_TABLE, key, val);
-    if(val){
-        return returnOK();
-    } else {
-        return returnNull();
+    listNode* node = args->head->next;
+    exoString* key;
+    exoVal* val;
+    while(node){
+        key = node->key;
+        val = newExoVal(EXOSTRING, node->next->key);
+        val = set(HASH_TABLE, key, val);
+        if(!val){
+            return returnNull();
+        }
+        node = node->next->next;
     }
+    return returnOK();
 }
