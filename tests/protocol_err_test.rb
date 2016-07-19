@@ -1,0 +1,41 @@
+require './base'
+
+class IllegalResp < Base
+
+  def initialize
+    super
+    (0..NUMBER_OF_TEST_CASES).each do |i|
+      strs = []
+      (3..10).each{|i| strs << random_string}
+      strs << "arun" if strs.length % 2 == 1
+      q = "*#{strs.length+1}\r\n$3\r\nset\r\n"
+      strs.each{|s| q = "#{q}$#{s.length}\r\n#{s}\r\n"}
+      queries << q
+    end
+
+    (0..NUMBER_OF_TEST_CASES).each do |i|
+      str = random_string
+      q = "*2\r\n$3\r\nget\r\n$#{str.length}\r\n#{str}\r\n"
+      queries << q
+    end
+
+    queries.each do |q|
+      r = rand(1..q.length-1)
+      q.slice!(r)
+    end
+  end
+
+  def test
+    check_protocol_err
+  end
+
+  def check_protocol_err
+    queries.each do |q|
+      expected = "-ERR Protocol error\r\n"
+      send_message q
+      msg = get_message
+      assert(msg, expected, q)
+    end
+  end
+
+end
