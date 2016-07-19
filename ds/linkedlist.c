@@ -60,7 +60,7 @@ void printList(linkedList *list){
     exoString *tmp_val;
     printf("%s %lu\n","Size: ", list->size);
     while(tmp){
-        if(tmp->value->ds_type == EXOSTRING){
+        if(tmp->value->ds_type == BULKSTRING){
             exoString *tmp_val = (exoString *)tmp->value->val_obj;
             printf("%s %s\n", tmp->key->buf, tmp_val->buf);
         } else {

@@ -17,17 +17,19 @@ linkedList* bufferTokenizer(char *str, unsigned long len){
     // empty string case, return NULL
     if(len < 1) return NULL;
 
+    linkedList* tokens = NULL;
     if(*str == '*'){
         // If it starts with a * it must be a RESP string (from redis client)
         printf(MAG "-------------------------- RESP TOKENIZER BEGINS ----------------------\n" RESET);
-        return respTokenizer(str, len);
+        tokens = respTokenizer(str, len);
         printf(MAG "-------------------------- RESP TOKENIZER ENDS ------------------------\n" RESET);
     } else {
         // if doesn't starts with a * it must be a simple string (from telnet)
         printf(MAG "-------------------------- SIMPLE TOKENIZER BEGINS --------------------\n" RESET);
-        return simpleTokenizer(str, len);
+        tokens = simpleTokenizer(str, len);
         printf(MAG "-------------------------- SIMPLE TOKENIZER ENDS ----------------------\n" RESET);
     }
+    return tokens;
 }
 
 linkedList* respTokenizer(char *str, unsigned long len){
@@ -168,7 +170,7 @@ linkedList* simpleTokenizer(char *str, unsigned long len){
 //     listNode *node;
 //     int n;
 //     char *str;
-//     char *str_arr[42];
+//     char *str_arr[43];
 //     str_arr[0]= "*";
 //     str_arr[1]= "*2";
 //     str_arr[2]= "*2\r";
@@ -211,13 +213,14 @@ linkedList* simpleTokenizer(char *str, unsigned long len){
 //     str_arr[39]= "*2\r\n$3\r\nfoo\r\r\r\n$11\r\r\r\r\r\r\narunkaushik\r\r\r\n";
 //     str_arr[40]= "*2\r\n$3\r\nfoo\r\n$11\r\narunkaushik\r\n";
 //     str_arr[41]= "*2\r\n$3\r\nfoo\r\n$12\r\narun\nkaushik\r\n";
+//     str_arr[42]= "*8\r\n$3\r\nset\r\n$3\r\nfoo\r\n$3\r\nbar\r\n$3\r\nabc\r\n$3\r\nabc\r\n$3\r\nabc\r\n$3\r\nabc\r\n$3\r\nfoo\r\n";
 
 //     //str_arr[22]= "*2\r\n$3\r\nfoo\r\n$4\r\narun\r\n";
 //     unsigned long len;
 //     n = 0;
 //     //printf("%s %d\n","for r ->" , '\r' );
 //     //printf("%s %d\n","for n ->" , '\n' );
-//     while(n < 42){
+//     while(n < 43){
 //         str = str_arr[n];
 //         len = strlen(str);
 //         //printf("%s %lu\n", "Strlen is ", len );

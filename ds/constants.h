@@ -1,7 +1,7 @@
 #ifndef CONSTANTS_H_   /* Include guard */
 #define CONSTANTS_H_
 
-#define SERVER_PORT 1500
+#define SERVER_PORT 15000
 #define INITIAL_SIZE 64
 
 #define FAILURE -1
@@ -9,14 +9,20 @@
 
 #define HASH_LEN 4
 
-#define EXOSTRING 0
-#define EXOCMD 1
+#define SIMPLE_STRING 0
+#define RESP_ERROR 1
+#define RESP_INTEGER 2
+#define BULKSTRING 3
+#define RESP_ARRAY 4
+
+#define EXOCMD 101
 
 // ERRORS
 
 #define COMMAND_NOT_FOUND -1
 #define WRONG_NUMBER_OF_ARGUMENTS -2
 #define WRONG_TYPE_OF_COMMAND_ON_TARGET_OBJECT -3
+#define PROTOCOL_ERROR -4
 
 
 // LOGGING

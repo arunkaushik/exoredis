@@ -6,8 +6,8 @@ of the APIs exposed to clients, like GET, SET, etc.
 It also folds the function pointers to which command execution shall be dispatched
 */
 struct exoCmd commandTable[] = {
-  {"GET", EXOSTRING, 1, false, getCommand},
-  {"SET", EXOSTRING, 2, true, setCommand},
+  {"GET", BULKSTRING, 1, false, getCommand},
+  {"SET", BULKSTRING, 2, true, setCommand},
 };
 
 /*
@@ -55,15 +55,15 @@ exoCmd* addCommand(hashTable *ht, exoCmd* cmd){
 /*
 Entry point for GET api
 */
-exoString* getCommand(linkedList* args){
+exoVal* getCommand(linkedList* args){
     printf(CYN "getCommand Called\n" RESET);
     listNode* node = args->head;
 
     // head holds command node, actual args starts from head->next
     exoVal* val = get(HASH_TABLE, node->next->key);
-    if(val && val->ds_type == EXOSTRING){
-        return (exoString*)val->val_obj;
-    } else if(val && val->ds_type != EXOSTRING) {
+    if(val && val->ds_type == BULKSTRING){
+        return val;
+    } else if(val && val->ds_type != BULKSTRING) {
         return returnError(WRONG_TYPE_OF_COMMAND_ON_TARGET_OBJECT);
     } else {
         return returnNull();
@@ -74,19 +74,15 @@ exoString* getCommand(linkedList* args){
 Entry point of SET api.
 SET command overwirtes the target value if it exists, 
 So no need to check the ds_type of target object. Simply over-write
-
-Currenty assumes there are only two arguments <key, value>
-Have to write to handle n*2 arguments
-
 */
-exoString* setCommand(linkedList* args){
+exoVal* setCommand(linkedList* args){
     printf(CYN "setCommand Called\n" RESET);
     listNode* node = args->head->next;
     exoString* key;
     exoVal* val;
     while(node){
         key = node->key;
-        val = newExoVal(EXOSTRING, node->next->key);
+        val = newExoVal(BULKSTRING, node->next->key);
         val = set(HASH_TABLE, key, val);
         if(!val){
             return returnNull();

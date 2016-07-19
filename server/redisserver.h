@@ -16,8 +16,8 @@
 
 #define MAX_LINE 16384
 
-exoString* commandDispatcher(linkedList*);
-exoString* executeCommand(exoCmd*, linkedList*);
+exoVal* commandDispatcher(linkedList*);
+exoVal* executeCommand(exoCmd*, linkedList*);
 bool validArgs(size_t, unsigned long, bool);
 void sig_handler(int);
 int shutdownServer();
@@ -25,6 +25,7 @@ void actionBeforeExit();
 void readcb(struct bufferevent *, void *);
 void errorcb(struct bufferevent *, short, void *);
 void do_accept(evutil_socket_t , short, void *);
+void writeToBuffer(exoVal *, struct evbuffer *);
 void run();
 int spinServer();
 

@@ -1,5 +1,40 @@
 #include "utilities.h"
 
+exoString PONG = {
+    5,
+    "+PONG"
+};
+
+exoString RET_OK = {
+    3,
+    "+OK"
+};
+
+exoString RET_NULL = {
+    3,
+    "$-1"
+};
+
+exoString RET_COMMAND_NOT_FOUND = {
+    20,
+    "-ERR unknown command"
+};
+
+exoString RET_WRONG_NUMBER_OF_ARGUMENTS = {
+    30,
+    "-ERR wrong number of arguments"
+};
+
+exoString RET_PROTOCOL_ERROR = {
+    19,
+    "-ERR Protocol error"
+};
+
+exoString RET_WRONG_TYPE_OF_COMMAND_ON_TARGET_OBJECT = {
+    39,
+    "-WRONG_TYPE_OF_COMMAND_ON_TARGET_OBJECT"
+};
+
 /*
 exoString is a data_type to store string and its length
 it makes length operation O(1)
@@ -86,21 +121,19 @@ void freeExoString(exoString* str){
 Function takes in a parameter code and return corresponding err exoString.
 It is one place to get result string for errored out cases.
 */
-exoString* returnError(int code){
+exoVal* returnError(int code){
     printf("%s %d\n", YEL "returnError Called with code: " RESET, code );
-    char *err_str;
     switch(code){
-        case COMMAND_NOT_FOUND:
-            err_str = "-ERR COMMAND_NOT_FOUND";
-            return newString(err_str, strlen(err_str));
+    case COMMAND_NOT_FOUND:
+        return newExoVal(RESP_ERROR, &RET_COMMAND_NOT_FOUND);
 
-        case WRONG_NUMBER_OF_ARGUMENTS:
-            err_str = "-ERR WRONG_NUMBER_OF_ARGUMENTS";
-            return newString(err_str, strlen(err_str));
+    case WRONG_NUMBER_OF_ARGUMENTS:
+        return newExoVal(RESP_ERROR, &RET_WRONG_NUMBER_OF_ARGUMENTS);
 
-        case WRONG_TYPE_OF_COMMAND_ON_TARGET_OBJECT:
-            err_str = "-ERR WRONG_TYPE_OF_COMMAND_ON_TARGET_OBJECT";
-            return newString(err_str, strlen(err_str));
+    case WRONG_TYPE_OF_COMMAND_ON_TARGET_OBJECT:
+        return newExoVal(RESP_ERROR, &RET_WRONG_TYPE_OF_COMMAND_ON_TARGET_OBJECT);
+    case PROTOCOL_ERROR:
+        return newExoVal(RESP_ERROR, &RET_PROTOCOL_ERROR);
     }
     return returnNull();
 }
@@ -108,17 +141,15 @@ exoString* returnError(int code){
 /*
 Cases where exoRedis has to return null
 */
-exoString* returnNull(){
-    char *str = "$-1";
-    return newString(str, strlen(str));
+exoVal* returnNull(){
+    return newExoVal(SIMPLE_STRING, &RET_NULL);
 }
 
 /*
 Cases where exoredis has to return +OK
 */
-exoString* returnOK(){
-    char *str = "+OK";
-    return newString(str, strlen(str));
+exoVal* returnOK(){
+    return newExoVal(SIMPLE_STRING, &RET_OK);
 }
 
 /*
@@ -143,5 +174,14 @@ void strUpCase(char *str){
          str[c] = str[c] - 32;
         }
         c++;
+    }
+}
+
+exoString* numberToString(unsigned long num){
+    char buffer [50];
+    if(num > 0 && sprintf (buffer, "%lu", num) > 0){
+        return newString(buffer, strlen(buffer));
+    } else {
+        return NULL;
     }
 }

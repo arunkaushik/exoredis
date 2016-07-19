@@ -25,8 +25,9 @@ void freeExoString(exoString*);
 void freeExoVal(exoVal*);
 exoString* upCase(exoString*);
 void strUpCase(char *);
-exoString* returnError(int);
-exoString* returnNull();
-exoString* returnOK();
+exoString* numberToString(unsigned long);
+exoVal* returnError(int);
+exoVal* returnNull();
+exoVal* returnOK();
 
 #endif

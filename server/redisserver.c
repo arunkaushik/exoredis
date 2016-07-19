@@ -74,7 +74,7 @@ void do_accept(evutil_socket_t listener, short event, void *arg){
 void readcb(struct bufferevent *bev, void *ctx){
     unsigned long bytesread, buffSize = 100000;
     linkedList* tokens = NULL;
-    exoString *result;
+    exoVal *result;
     char buf[buffSize];
     struct evbuffer *input, *output;
     input = bufferevent_get_input(bev);
@@ -86,18 +86,17 @@ void readcb(struct bufferevent *bev, void *ctx){
 
     tokens = bufferTokenizer(buf, bytesread);
 
-    result = commandDispatcher(tokens);
-
-    if(result){
-        evbuffer_add(output, result->buf, result->len);        
+    if(tokens){
+        result = commandDispatcher(tokens);
+    } else {
+        result = returnError(PROTOCOL_ERROR);
     }
-    // for now, will remove later
-    // Have to implement resp returns
-    evbuffer_add(output, "\n", 1);
+    
+    writeToBuffer(result, output);      
 
     // ****** BELOW CODE IS FOR HANDLEING BUFFER LIMITATIONS
     // ************** HAVE TO LOOK INTO IT *****************
-    
+
     // if (evbuffer_get_length(input) >= MAX_LINE) {
     //     /* Too long; just process what there is and go on so that the buffer
     //      * doesn't grow infinitely long. */
@@ -110,6 +109,41 @@ void readcb(struct bufferevent *bev, void *ctx){
     //     }
     //     evbuffer_add(output, "\n", 1);
     // }
+}
+
+void writeToBuffer(exoVal *result, struct evbuffer *output){
+    exoString *str, *num_str;
+    switch (result->ds_type){
+    case SIMPLE_STRING:
+        str = (exoString*)result->val_obj;
+        evbuffer_add(output, str->buf, str->len); 
+        evbuffer_add(output, "\r\n", 2);
+        return;
+
+    case RESP_ERROR:
+        str = (exoString*)result->val_obj;
+        evbuffer_add(output, str->buf, str->len);
+        evbuffer_add(output, "\r\n", 2);
+        return;
+
+    case RESP_INTEGER:
+        evbuffer_add(output, "\r\n", 2);
+        return;
+
+    case BULKSTRING:
+        evbuffer_add(output, "$", 1);
+        str = (exoString*)result->val_obj;
+        num_str = numberToString(str->len);
+        evbuffer_add(output, num_str->buf, num_str->len);
+        evbuffer_add(output, "\r\n", 2);
+        evbuffer_add(output, str->buf, str->len); 
+        evbuffer_add(output, "\r\n", 2);
+        return;
+
+    case RESP_ARRAY:
+        // yet to implement
+        return;
+    }
 }
 
 void errorcb(struct bufferevent *bev, short error, void *ctx){
@@ -131,19 +165,16 @@ Finds the command fired in the command hash_table.
 If found, task is dispatched to the found command else
 returns COMMAND NOT FOUND err
 */
-exoString* commandDispatcher(linkedList* tokens){
-    if(tokens && tokens->size){
-        exoString* cmd_str = tokens->head->key;
-        exoVal* node = get(COMMANDS, upCase(cmd_str));
-        exoCmd* cmd;
-        if(node){
-            cmd = (exoCmd*)node->val_obj;
-            return executeCommand(cmd, tokens);
-        } else {
-            return returnError(COMMAND_NOT_FOUND);
-        }
+exoVal* commandDispatcher(linkedList* tokens){
+    exoString* cmd_str = tokens->head->key;
+    exoVal* node = get(COMMANDS, upCase(cmd_str));
+    exoCmd* cmd;
+    if(node){
+        cmd = (exoCmd*)node->val_obj;
+        return executeCommand(cmd, tokens);
+    } else {
+        return returnError(COMMAND_NOT_FOUND);
     }
-    return NULL;
 }
 
 /*
@@ -151,11 +182,11 @@ Checks if the passed args are compliant to the end API.
 If compliant, it sends of the args to the function pointer
 store in the exoCmd struct. Else it retrun WRONG_NUMBER_OF_ARGUMENTS err
 */
-exoString* executeCommand(exoCmd* cmd, linkedList* tokens){
+exoVal* executeCommand(exoCmd* cmd, linkedList* tokens){
     if(validArgs(cmd->args_count, tokens->size -1, cmd->variable_arg_count)){
         return cmd->f_ptr(tokens);
     } else {
-        returnError(WRONG_NUMBER_OF_ARGUMENTS);
+        return returnError(WRONG_NUMBER_OF_ARGUMENTS);
     }
     return returnNull();
 }
