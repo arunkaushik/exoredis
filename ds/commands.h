@@ -1,6 +1,6 @@
 #ifndef COMMANDS_H_   /* Include guard */
 #define COMMANDS_H_
-#include "hashtable.h"
+#include "bitmap.h"
 
 typedef struct exoCmd{
     char* cmd_str;
@@ -16,5 +16,7 @@ exoVal* getCommand(linkedList*);
 exoVal* setCommand(linkedList*);
 exoVal* pingCommand(linkedList*);
 exoVal* flushCommand(linkedList*);
+exoVal* getbitCommand(linkedList*);
+exoVal* setbitCommand(linkedList*);
 
 #endif

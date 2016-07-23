@@ -17,6 +17,11 @@ typedef struct exoVal{
     void *val_obj;
 }exoVal;
 
+typedef struct bitmapNode{
+    void *mem;
+    unsigned long len;
+}bitmapNode;
+
 exoString* newString(void *, unsigned long);
 exoVal* newExoVal(size_t, void *);
 void printString(exoString*);
@@ -26,9 +31,12 @@ void freeExoVal(exoVal*);
 exoString* upCase(exoString*);
 void strUpCase(char *);
 exoString* numberToString(unsigned long);
+unsigned long stringToLong(char *);
+int stringToBit(exoString *);
 exoVal* returnError(int);
 exoVal* returnNull();
 exoVal* returnOK();
 exoVal* returnPong();
+void freebitmapNode(bitmapNode*);
 
 #endif

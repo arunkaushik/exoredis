@@ -1,5 +1,14 @@
 #include "commands.h"
 
+exoString RET_BIT_ON = {
+    2,
+    ":1"
+};
+
+exoString RET_BIT_OFF = {
+    2,
+    ":0"
+};
 /*
 array of exoCmds. exoCmd is the data_type that holds all the information 
 of the APIs exposed to clients, like GET, SET, etc. 
@@ -9,7 +18,9 @@ struct exoCmd commandTable[] = {
   {"GET", BULKSTRING, 1, false, getCommand},
   {"SET", BULKSTRING, 2, true, setCommand},
   {"PING", SIMPLE_STRING, 0, false, pingCommand},
-  {"FLUSHALL", SIMPLE_STRING, 0, false, flushCommand}
+  {"FLUSHALL", SIMPLE_STRING, 0, false, flushCommand},
+  {"GETBIT", BITMAP, 2, false, getbitCommand},
+  {"SETBIT", BITMAP, 3, false, setbitCommand},
 };
 
 /*
@@ -107,4 +118,64 @@ exoVal* flushCommand(linkedList* args){
     } else {
         return returnError(FAILED_TO_FLUSH_DB);
     } 
+}
+
+exoVal* getbitCommand(linkedList* args){
+    bitmapNode* node;
+    bool result;
+    unsigned long pos;
+    printf(CYN "getbitCommand Called\n" RESET);
+    listNode* arg = args->head->next;
+    pos = stringToLong(arg->next->key->buf);
+    if(pos == -1){
+        return returnError(OFFSET_NOT_INT_OR_OUT_OF_RANGE);
+    }
+
+    exoVal* val = get(HASH_TABLE, arg->key);
+    if(val){
+        if(val->ds_type == BITMAP){
+            node = (bitmapNode*)val->val_obj;
+            result = getBit(node, pos);                
+        } else {
+            return returnError(WRONG_TYPE_OF_COMMAND_ON_TARGET_OBJECT);
+        }
+    } else {     
+        result = false;
+    }
+    return result ? newExoVal(RESP_INTEGER, &RET_BIT_ON) : newExoVal(RESP_INTEGER, &RET_BIT_OFF);
+}
+
+exoVal* setbitCommand(linkedList* args){
+    bitmapNode* node;
+    bool result;
+    unsigned long pos;
+    int bit;
+    listNode* arg = args->head->next;
+    printf(CYN "setbitCommand Called\n" RESET);
+
+    pos = stringToLong(arg->next->key->buf);
+    if(pos == -1){
+        return returnError(OFFSET_NOT_INT_OR_OUT_OF_RANGE);
+    }
+    bit = stringToBit(arg->next->next->key);
+    if(bit == -1){
+        return returnError(BIT_NOT_INT_OR_OUT_OF_RANGE);
+    }
+
+    exoVal* val = get(HASH_TABLE, arg->key);
+
+    if(val){
+        if(val->ds_type == BITMAP){
+            node = (bitmapNode*)val->val_obj;
+            result = setBit(node, pos, bit);
+        } else {
+            return returnError(WRONG_TYPE_OF_COMMAND_ON_TARGET_OBJECT);
+        }
+    } else {     
+            node = initBitmapNode(pos, bit);
+            val = newExoVal(BITMAP, node);
+            set(HASH_TABLE, arg->key, val);
+            result = false;
+    }
+    return result ? newExoVal(RESP_INTEGER, &RET_BIT_ON) : newExoVal(RESP_INTEGER, &RET_BIT_OFF);
 }

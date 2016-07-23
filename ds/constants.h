@@ -2,8 +2,8 @@
 #define CONSTANTS_H_
 
 #define SERVER_PORT 15000
-#define INITIAL_SIZE 64
-
+#define INITIAL_SIZE 1024
+#define OFFSET_MAX 4294967295
 #define FAILURE -1
 #define SUCCESS 1
 
@@ -16,6 +16,7 @@
 #define RESP_ARRAY 4
 
 #define EXOCMD 101
+#define BITMAP 102
 
 // ERRORS
 
@@ -24,6 +25,8 @@
 #define WRONG_TYPE_OF_COMMAND_ON_TARGET_OBJECT -3
 #define PROTOCOL_ERROR -4
 #define FAILED_TO_FLUSH_DB -5
+#define OFFSET_NOT_INT_OR_OUT_OF_RANGE -6
+#define BIT_NOT_INT_OR_OUT_OF_RANGE -7
 
 
 // LOGGING

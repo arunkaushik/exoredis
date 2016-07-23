@@ -40,6 +40,15 @@ exoString RET_FLUSHALL_ERROR = {
     "-Failed to flush db"
 };
 
+exoString RET_NOT_INT_OR_OUT_OF_RANGE = {
+    49,
+    "-ERR bit offset is not an integer or out of range"
+};
+
+exoString RET_BIT_NOT_INT_OR_OUT_OF_RANGE = {
+    42,
+    "-ERR bit is not an integer or out of range"
+};
 /*
 exoString is a data_type to store string and its length
 it makes length operation O(1)
@@ -108,7 +117,10 @@ size_t stringHash(char *str){
 Frees memory holded by exoVal object
 */
 void freeExoVal(exoVal* val){
-    if(val){
+    if(val && val->ds_type == BITMAP){
+        freebitmapNode(val->val_obj);
+        free(val);
+    } else if(val){
         free(val);
     }
 }
@@ -120,6 +132,15 @@ void freeExoString(exoString* str){
     if(str){
         free(str);
     }
+}
+
+/*
+Frees memory holded by bitmapnode object
+*/
+void freebitmapNode(bitmapNode* node){
+    if(node == NULL) return;
+    free(node->mem);
+    free(node);
 }
 
 /*
@@ -141,6 +162,10 @@ exoVal* returnError(int code){
         return newExoVal(RESP_ERROR, &RET_PROTOCOL_ERROR);
     case FAILED_TO_FLUSH_DB:
         return newExoVal(RESP_ERROR, &RET_FLUSHALL_ERROR);
+    case OFFSET_NOT_INT_OR_OUT_OF_RANGE:
+        return newExoVal(RESP_ERROR, &RET_NOT_INT_OR_OUT_OF_RANGE);
+    case BIT_NOT_INT_OR_OUT_OF_RANGE:
+        return newExoVal(RESP_ERROR, &RET_BIT_NOT_INT_OR_OUT_OF_RANGE);
     }
     return returnNull();
 }
@@ -198,4 +223,29 @@ exoString* numberToString(unsigned long num){
     } else {
         return NULL;
     }
+}
+
+unsigned long stringToLong(char *str){
+    unsigned long l = 0;
+    while(*str != '\0') {
+        // return -1 if illegal number or > then OFFSET_MAX
+        if(*str < '0' || *str > '9' || l > OFFSET_MAX){
+            return -1;
+        }
+        l = (l*10)+(*str - '0');
+        str++;
+    }
+    return l > OFFSET_MAX ? -1 : l;
+}
+
+int stringToBit(exoString *str){
+    char *c = str->buf;
+    if(str->len > 1){
+        return -1;
+    } else if(*c == '0' || *c == '1'){
+        return *c - '0';
+    } else {
+        return -1;
+    }
+    
 }

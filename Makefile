@@ -1,6 +1,7 @@
 server: server/redisserver.c \
 		protocol/resp.c \
 		ds/commands.c \
+		ds/bitmap.c \
 		ds/hashtable.c \
 		ds/linkedlist.c \
 		ds/utilities.c
@@ -9,6 +10,7 @@ server: server/redisserver.c \
 			ds/utilities.c \
 			ds/linkedlist.c \
 			ds/hashtable.c \
+			ds/bitmap.c \
 			ds/commands.c \
 			protocol/resp.c \
 			server/redisserver.c -levent

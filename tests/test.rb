@@ -7,6 +7,7 @@ require './get_test'
 require './buffersize'
 require './ping_test'
 require './flushall_test'
+require './bitmap_test'
 
 UnknownCommand.new().perform
 WrongNumberOfArguments.new().perform
@@ -16,3 +17,4 @@ GetTest.new().perform
 BufferSize.new().perform
 PingTest.new().perform
 FlushallTest.new().perform
+BitmapTest.new().perform

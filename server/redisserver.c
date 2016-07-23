@@ -133,6 +133,8 @@ void writeToBuffer(exoVal *result, struct evbuffer *output){
         return;
 
     case RESP_INTEGER:
+        str = (exoString*)result->val_obj;
+        evbuffer_add(output, str->buf, str->len);
         evbuffer_add(output, "\r\n", 2);
         return;
 
