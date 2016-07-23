@@ -14,7 +14,7 @@
 #include "../protocol/resp.h"
 //#include "../tcpsocket/soket.h"
 
-#define MAX_LINE 16384
+#define MAX_LINE 100000
 
 exoVal* commandDispatcher(linkedList*);
 exoVal* executeCommand(exoCmd*, linkedList*);

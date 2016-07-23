@@ -2,3 +2,4 @@
 redis_server
 a.out
 */*.out
+backup.c

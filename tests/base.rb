@@ -15,6 +15,7 @@ class Base
     @failure = 0
     @fail_cases = []
     @conn = TCPSocket.open(URL, PORT)
+    @conn.setsockopt(Socket::SOL_SOCKET, Socket::SO_KEEPALIVE, true)
   end
 
   def perform

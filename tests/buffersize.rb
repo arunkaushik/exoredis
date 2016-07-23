@@ -1,14 +1,15 @@
 require './base'
 
-class GetTest < Base
+class BufferSize < Base
 
   def initialize
     super
     @answers = {}
     @rand_get = []
+    puts "Building long payloads, it may take some time..."
     (0..NUMBER_OF_TEST_CASES).each do |i|
       str1 = random_string
-      str2 = random_string
+      str2 = (0..3500).map { ('a'..'z').to_a[rand(26)] }.join
       answers[str1] = str2
       @rand_get << str1
       queries << "*3\r\n$3\r\nset\r\n$#{str1.length}\r\n#{str1}\r\n$#{str2.length}\r\n#{str2}\r\n"
@@ -16,20 +17,20 @@ class GetTest < Base
   end
 
   def test
-    sethash
-    checkhash
+    settest
+    gettest
   end
 
-  def sethash
-    queries.each do|q|
-      send_message q
+  def settest
+    queries.each do |q|
       expected = "+OK\r\n"
+      send_message q
       msg = get_message
       assert(msg, expected, q)
     end
   end
 
-  def checkhash
+  def gettest
     (0..NUMBER_OF_TEST_CASES).each do |i|
       n = rand(0..@rand_get.length-1)
       q = @rand_get[n]
