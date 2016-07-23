@@ -122,6 +122,7 @@ void freeLinkedList(linkedList* list){
 frees the memory holded by given listnode
 */
 void freeListNode(listNode *node){
+    if(node == NULL) return;
     freeExoString(node->key);
     freeExoVal(node->value);
     free(node);

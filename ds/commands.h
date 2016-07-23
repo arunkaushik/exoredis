@@ -14,5 +14,7 @@ hashTable* initializeCmdTable();
 exoCmd* addCommand(hashTable*, exoCmd*);
 exoVal* getCommand(linkedList*);
 exoVal* setCommand(linkedList*);
+exoVal* pingCommand(linkedList*);
+exoVal* flushCommand(linkedList*);
 
 #endif

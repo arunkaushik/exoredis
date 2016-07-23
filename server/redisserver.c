@@ -8,8 +8,14 @@ int main(){
 
     HASH_TABLE = newHashTable(INITIAL_SIZE);
 
-    spinServer();
-
+    if(COMMANDS && HASH_TABLE){
+        spinServer();       
+    } else {
+        freeHashTable(COMMANDS);
+        freeHashTable(HASH_TABLE);
+        printf(RED "Failed to initialize server.\n" RESET);
+        return EXIT_FAILURE; 
+    }
     return EXIT_SUCCESS; 
 }
 

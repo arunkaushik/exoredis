@@ -35,6 +35,11 @@ exoString RET_WRONG_TYPE_OF_COMMAND_ON_TARGET_OBJECT = {
     "-WRONG_TYPE_OF_COMMAND_ON_TARGET_OBJECT"
 };
 
+exoString RET_FLUSHALL_ERROR = {
+    19,
+    "-Failed to flush db"
+};
+
 /*
 exoString is a data_type to store string and its length
 it makes length operation O(1)
@@ -134,6 +139,8 @@ exoVal* returnError(int code){
         return newExoVal(RESP_ERROR, &RET_WRONG_TYPE_OF_COMMAND_ON_TARGET_OBJECT);
     case PROTOCOL_ERROR:
         return newExoVal(RESP_ERROR, &RET_PROTOCOL_ERROR);
+    case FAILED_TO_FLUSH_DB:
+        return newExoVal(RESP_ERROR, &RET_FLUSHALL_ERROR);
     }
     return returnNull();
 }
@@ -150,6 +157,13 @@ Cases where exoredis has to return +OK
 */
 exoVal* returnOK(){
     return newExoVal(SIMPLE_STRING, &RET_OK);
+}
+
+/*
+Cases where exoredis has to return +PONG
+*/
+exoVal* returnPong(){
+    return newExoVal(SIMPLE_STRING, &PONG);
 }
 
 /*

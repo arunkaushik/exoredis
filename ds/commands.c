@@ -8,6 +8,8 @@ It also folds the function pointers to which command execution shall be dispatch
 struct exoCmd commandTable[] = {
   {"GET", BULKSTRING, 1, false, getCommand},
   {"SET", BULKSTRING, 2, true, setCommand},
+  {"PING", SIMPLE_STRING, 0, false, pingCommand},
+  {"FLUSHALL", SIMPLE_STRING, 0, false, flushCommand}
 };
 
 /*
@@ -90,4 +92,19 @@ exoVal* setCommand(linkedList* args){
         node = node->next->next;
     }
     return returnOK();
+}
+
+exoVal* pingCommand(linkedList* args){
+    return returnPong();
+}
+
+exoVal* flushCommand(linkedList* args){
+    hashTable *new_table = newHashTable(INITIAL_SIZE);
+    if(new_table){
+        freeHashTable(HASH_TABLE);
+        HASH_TABLE = new_table;
+        return returnOK();
+    } else {
+        return returnError(FAILED_TO_FLUSH_DB);
+    } 
 }

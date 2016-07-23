@@ -29,5 +29,6 @@ exoString* numberToString(unsigned long);
 exoVal* returnError(int);
 exoVal* returnNull();
 exoVal* returnOK();
+exoVal* returnPong();
 
 #endif
