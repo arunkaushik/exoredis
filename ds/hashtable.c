@@ -47,6 +47,22 @@ exoVal* set(hashTable* ht, exoString* key, exoVal* val){
 }
 
 /*
+deletes the entry from the given hash_table with specified key
+It does not check for ds_type, simple remove the entry from table
+*/
+size_t del(hashTable* ht, exoString* key){
+    printf(RED "del Called\n" RESET);
+    size_t str_hash = stringHash(key->buf);
+    listNode* node = findNode(ht->buckets[str_hash], key);
+    if(node){
+        removeNodeFromList(ht->buckets[str_hash], node);
+        freeListNode(node);
+        return 1;
+    }
+    return 0;
+}
+
+/*
 frees all the memory holded my hash_table
 */
 void freeHashTable(hashTable* ht){

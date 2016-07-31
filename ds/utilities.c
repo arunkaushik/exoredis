@@ -49,6 +49,31 @@ exoString RET_BIT_NOT_INT_OR_OUT_OF_RANGE = {
     42,
     "-ERR bit is not an integer or out of range"
 };
+
+exoString RET_INCR_OPTION_SUPPORTS_A_SINGLE_INCREMENT_ELEMENT_PAIR = {
+    57,
+    "-ERR INCR option supports a single increment-element pair"
+};
+
+exoString RET_SYNTAX_ERROR = {
+    17,
+    "-ERR syntax error"
+};
+
+exoString RET_VALUE_IS_NOT_A_VALID_FLOAT = {
+    31,
+    "-ERR value is not a valid float"
+};
+
+exoString RET_XX_AND_NX_OPTIONS_AT_THE_SAME_TIME_ARE_NOT_COMPATIBLE = {
+    58,
+    "-ERR XX and NX options at the same time are not compatible"
+};
+
+exoString RET_MIN_OR_MAX_IS_NOT_A_FLOAT = {
+    30,
+    "-ERR min or max is not a float"
+};
 /*
 exoString is a data_type to store string and its length
 it makes length operation O(1)
@@ -101,7 +126,6 @@ void printString(exoString* str){
 Hash function used to calculate hash for strings
 */
 size_t stringHash(char *str){
-    printf("%s %s\n", YEL "new stringHash called for string: " RESET, str);
     unsigned long hash = 5381;
     int c, l = HASH_LEN;
 
@@ -109,7 +133,7 @@ size_t stringHash(char *str){
         c = *str++;
         hash = ((hash << 5) + hash) + c;
     }
-    printf("%s %zu\n", YEL "string hash calculated: " RESET, hash % INITIAL_SIZE);
+    printf("%s %s %zu\n", YEL "string hash calculated for str: " RESET, str, hash % INITIAL_SIZE);
     return hash % INITIAL_SIZE;
 }
 
@@ -166,6 +190,16 @@ exoVal* returnError(int code){
         return newExoVal(RESP_ERROR, &RET_NOT_INT_OR_OUT_OF_RANGE);
     case BIT_NOT_INT_OR_OUT_OF_RANGE:
         return newExoVal(RESP_ERROR, &RET_BIT_NOT_INT_OR_OUT_OF_RANGE);
+    case INCR_OPTION_SUPPORTS_A_SINGLE_INCREMENT_ELEMENT_PAIR:
+        return newExoVal(RESP_ERROR, &RET_INCR_OPTION_SUPPORTS_A_SINGLE_INCREMENT_ELEMENT_PAIR);
+    case SYNTAX_ERROR:
+        return newExoVal(RESP_ERROR, &RET_SYNTAX_ERROR);
+    case VALUE_IS_NOT_A_VALID_FLOAT:
+        return newExoVal(RESP_ERROR, &RET_VALUE_IS_NOT_A_VALID_FLOAT);
+    case XX_AND_NX_OPTIONS_AT_THE_SAME_TIME_ARE_NOT_COMPATIBLE:
+        return newExoVal(RESP_ERROR, &RET_XX_AND_NX_OPTIONS_AT_THE_SAME_TIME_ARE_NOT_COMPATIBLE);
+    case MIN_OR_MAX_IS_NOT_A_FLOAT:
+        return newExoVal(RESP_ERROR, &RET_MIN_OR_MAX_IS_NOT_A_FLOAT);
     }
     return returnNull();
 }
@@ -216,15 +250,33 @@ void strUpCase(char *str){
     }
 }
 
+/*
+Converts an unsigned long into exostring. Returns NULL if fails
+*/
 exoString* numberToString(unsigned long num){
     char buffer [50];
-    if(num > 0 && sprintf (buffer, "%lu", num) > 0){
+    if(sprintf (buffer, "%lu", num) > 0){
         return newString(buffer, strlen(buffer));
     } else {
         return NULL;
     }
 }
 
+/*
+Converts a long double into exostring. Returns NULL if fails
+*/
+exoString* doubleToString(long double num){
+    char buffer [100];
+    if(snprintf (buffer, 100, "%Lf", num) > 0){
+        return newString(buffer, strlen(buffer));
+    } else {
+        return NULL;
+    }
+}
+
+/*
+Converts a char string into unsigned long. Return -1 if greater than _max_
+*/
 unsigned long stringToLong(char *str){
     unsigned long l = 0;
     while(*str != '\0') {
@@ -238,6 +290,9 @@ unsigned long stringToLong(char *str){
     return l > OFFSET_MAX ? -1 : l;
 }
 
+/*
+Converts an exostring into bit. Return -1 if illegal string
+*/
 int stringToBit(exoString *str){
     char *c = str->buf;
     if(str->len > 1){
@@ -248,4 +303,40 @@ int stringToBit(exoString *str){
         return -1;
     }
     
+}
+
+/*
+Convers a char string into long double. Return -1 if illegal
+*/
+long double stringTolongDouble(char *str){
+    long double res;
+    long double frac = 0.0;
+    int num = 0, fraction = 0, frac_len = 1;
+    bool decimal = false;
+    while(*str != '\0'){
+        if(*str < '0' || *str > '9'){
+            if(*str == '.'){
+                if(decimal){
+                    return -1;
+                } else {
+                    decimal = true;
+                }
+            } else {
+                return -1;
+            }
+        } else {
+            if(decimal){
+                frac_len *= 10;
+                fraction = (fraction*10)+(*str - '0');
+            } else {
+                num = (num*10)+(*str - '0');
+            }
+        }
+        str++;
+    }
+    res = num;
+    if(fraction){
+        frac = (double)fraction/frac_len;
+    }
+    return res + frac;
 }

@@ -16,7 +16,7 @@ bool setBit(bitmapNode*, unsigned long, bool);
 bool setbitUtility(void* , unsigned long);
 bool clearbitUtility(void* , unsigned long);
 bool getbitUtility(void* , unsigned long);
-inline unsigned long word_offet(unsigned long);
+inline unsigned long word_offset(unsigned long);
 inline size_t bit_offset(unsigned long);
 
 #endif

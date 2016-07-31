@@ -98,7 +98,8 @@ void readcb(struct bufferevent *bev, void *ctx){
         result = returnError(PROTOCOL_ERROR);
     }
     
-    writeToBuffer(result, output);      
+    writeToBuffer(result, output);  
+    // Have to free tokens THINK ABOUT IT    
 
     // ****** BELOW CODE IS FOR HANDLEING BUFFER LIMITATIONS
     // ************** HAVE TO LOOK INTO IT *****************
@@ -134,6 +135,7 @@ void writeToBuffer(exoVal *result, struct evbuffer *output){
 
     case RESP_INTEGER:
         str = (exoString*)result->val_obj;
+        evbuffer_add(output, ":", 1);
         evbuffer_add(output, str->buf, str->len);
         evbuffer_add(output, "\r\n", 2);
         return;
@@ -191,7 +193,8 @@ If compliant, it sends of the args to the function pointer
 store in the exoCmd struct. Else it retrun WRONG_NUMBER_OF_ARGUMENTS err
 */
 exoVal* executeCommand(exoCmd* cmd, linkedList* tokens){
-    if(validArgs(cmd->args_count, tokens->size -1, cmd->variable_arg_count)){
+    if(cmd->skip_arg_test || \
+        validArgs(cmd->args_count, tokens->size -1, cmd->variable_arg_count)){
         return cmd->f_ptr(tokens);
     } else {
         return returnError(WRONG_NUMBER_OF_ARGUMENTS);
@@ -201,6 +204,7 @@ exoVal* executeCommand(exoCmd* cmd, linkedList* tokens){
 
 /*
 Utility function used by executeCommand
+***** HAVE TO MODIFY FOR ZADD.... think about minimum args and then dynamic arg nature
 */
 bool validArgs(size_t arg_count, unsigned long args_passed, bool variable_args){
     printf("%s %zu %lu\n", WHT "validArgs called with: " RESET, arg_count, args_passed);

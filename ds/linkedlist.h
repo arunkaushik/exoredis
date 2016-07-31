@@ -18,6 +18,7 @@ typedef struct linkedList{
 linkedList* newLinkedList();
 listNode* newNode(exoString *, exoVal *);
 listNode * addNodeToList(linkedList *, listNode *);
+listNode* removeNodeFromList(linkedList *, listNode *);
 listNode* findNode(linkedList *, exoString *);
 exoVal* replaceNodeValue(listNode *, exoVal *);
 void printList(linkedList *);

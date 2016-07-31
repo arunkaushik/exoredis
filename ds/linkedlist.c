@@ -34,8 +34,8 @@ adds list node to the given list
 */
 listNode* addNodeToList(linkedList *list, listNode *node){
     if(list == NULL || node == NULL){
-        return NULL;
         printf(GRN "node NOT added to List\n" RESET);
+        return NULL;
     } else {
         if(list->head){
             list->tail->next = node;
@@ -46,6 +46,36 @@ listNode* addNodeToList(linkedList *list, listNode *node){
             list->tail = list->head;
         }
         list->size++;
+        printf("%s %s\n", GRN "node with key added to List : " RESET, node->key->buf);
+        return node;
+    } 
+}
+
+/*
+Remove and returns the node from the list. It does not frees the memory of the node.
+Freeing memory to be handled by the calling function
+*/
+listNode* removeNodeFromList(linkedList *list, listNode *node){
+    if(list == NULL || node == NULL){
+        printf(GRN "node NOT Removed from List\n" RESET);
+        return NULL;
+    } else {
+        if(list->size == 1){
+            list->head = NULL;
+            list->tail = NULL;
+        } else {
+            if(node->prev == NULL){ // head node
+                node->next->prev = NULL;
+                list->head = node->next;
+            } else if(node->next == NULL) { // tail node
+                node->prev->next = NULL;
+                list->tail = node->prev;
+            } else {
+                node->prev->next = node->next;
+                node->next->prev = node->prev;
+            }
+        }
+        list->size--;
         printf("%s %s\n", GRN "node with key added to List : " RESET, node->key->buf);
         return node;
     } 

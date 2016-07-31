@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <float.h>
 #include "constants.h"
 
 typedef struct exoString{
@@ -38,5 +39,7 @@ exoVal* returnNull();
 exoVal* returnOK();
 exoVal* returnPong();
 void freebitmapNode(bitmapNode*);
+long double stringTolongDouble(char *);
+exoString* doubleToString(long double);
 
 #endif
