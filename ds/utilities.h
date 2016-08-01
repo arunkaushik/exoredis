@@ -8,6 +8,9 @@
 #include <float.h>
 #include "constants.h"
 
+#define MAX( a, b ) ( ( a > b) ? a : b )
+#define MIN( a, b ) ( ( a < b) ? a : b )
+
 typedef struct exoString{
     unsigned long len;
     char buf[];

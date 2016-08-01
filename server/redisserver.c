@@ -151,9 +151,31 @@ void writeToBuffer(exoVal *result, struct evbuffer *output){
         return;
 
     case RESP_ARRAY:
-        // yet to implement
+        writeRespArrayToBuffer(result, output);
         return;
     }
+}
+
+void writeRespArrayToBuffer(exoVal *result, struct evbuffer *output){
+    linkedList *list = (linkedList*)result->val_obj;
+    listNode *node = list->head;
+    exoString *tmp;
+    tmp = numberToString(list->size);
+    evbuffer_add(output, "*", 1);
+    evbuffer_add(output, tmp->buf, tmp->len);
+    evbuffer_add(output, "\r\n", 2);
+    while(node){
+        tmp = numberToString(node->key->len);
+        evbuffer_add(output, "$", 1);
+        evbuffer_add(output, tmp->buf, tmp->len);
+        evbuffer_add(output, "\r\n", 2);
+        evbuffer_add(output, node->key->buf, node->key->len);
+        evbuffer_add(output, "\r\n", 2);
+        node = node->next;
+    }
+    // Have to think about it
+    //freeLinkedList(list);
+    return;
 }
 
 void errorcb(struct bufferevent *bev, short error, void *ctx){

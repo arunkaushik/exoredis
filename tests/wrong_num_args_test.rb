@@ -2,15 +2,28 @@ require './base'
 
 class WrongNumberOfArguments < Base
 
+  COMMANDS = {
+    "get" => 1,
+    "set" => 2,
+    "ping" => 0,
+    "flushall" => 0,
+    "getbit" => 2,
+    "setbit" => 3,
+    "zcard" => 1,
+    "zcount" => 3
+  }
+
   def initialize
     super
-    (0..NUMBER_OF_TEST_CASES).each do |i|
-      strs = []
-      (3..10).each{|i| strs << random_string}
-      strs << "arun" if strs.length % 2 == 0
-      q = "*#{strs.length+1}\r\n$3\r\nset\r\n"
-      strs.each{|s| q = "#{q}$#{s.length}\r\n#{s}\r\n"}
-      queries << q
+    COMMANDS.each do |cmd, args|
+      (0..NUMBER_OF_TEST_CASES/10).each do |i|
+        strs = []
+        (0..10).each{|i| strs << random_string}
+        strs << "arun" if strs.length == args
+        q = "*#{strs.length+1}\r\n$#{cmd.length}\r\n#{cmd}\r\n"
+        strs.each{|s| q = "#{q}$#{s.length}\r\n#{s}\r\n"}
+        queries << q
+      end
     end
 
     (0..NUMBER_OF_TEST_CASES).each do |i|
@@ -34,5 +47,4 @@ class WrongNumberOfArguments < Base
       assert(msg, expected, q)
     end
   end
-
 end

@@ -341,3 +341,25 @@ unsigned long rankByScore(skipList* list, long double score, bool inclusive){
     }
     return rank;
 }
+
+skipListNode* rankByOrder(skipList* list, long long pos){
+    printf("%s\n", RED "-------- rankByOrder Called----------: " RESET);
+    int i = list->levels;
+    unsigned long count = 0;
+    skipListNode *tmp = list->head;
+    skipListNode *prev= NULL;
+    if(pos >= list->size || pos < 0){
+        return NULL;
+    } else {
+        while(i >= 0){
+            while(tmp->next && count + tmp->children <= pos){
+                count += tmp->children;
+                tmp = tmp->next;
+            }
+            prev = tmp;
+            tmp = tmp->down;
+            i--; 
+        }
+        return prev->next;
+    }
+}

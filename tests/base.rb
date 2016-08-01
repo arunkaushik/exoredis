@@ -2,7 +2,7 @@ require 'socket'
 
 class Base
 
-  NUMBER_OF_TEST_CASES = 100
+  NUMBER_OF_TEST_CASES = 500
   PORT = 15000
   URL = "localhost"
   attr_accessor :conn, :queries, :answers
@@ -51,8 +51,8 @@ class Base
     message
   end
 
-  def random_string
-    (0...rand(1..50)).map { ('a'..'z').to_a[rand(26)] }.join
+  def random_string len = 50
+    (0...rand(1..len)).map { ('a'..'z').to_a[rand(26)] }.join
   end
 
   def flushdb

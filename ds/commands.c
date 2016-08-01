@@ -24,7 +24,8 @@ struct exoCmd commandTable[] = {
   {"SETBIT", BITMAP, 3, false, false, setbitCommand},
   {"ZADD", SORTED_SET, 3, true, true, zaddCommand},
   {"ZCARD", SORTED_SET, 1, false, false, zcardCommand},
-  {"ZCOUNT", SORTED_SET, 3, false, false, zcountCommand}
+  {"ZCOUNT", SORTED_SET, 3, false, false, zcountCommand},
+  {"ZRANGE", SORTED_SET, 3, false, true, zrangeCommand}
 };
 
 /*
@@ -269,7 +270,7 @@ exoVal* zcardCommand(linkedList* args){
 }
 
 /*
-Entry point of count api.
+Entry point of ZCOUNT api.
 */
 exoVal* zcountCommand(linkedList* args){
     printf(CYN "zcountCommand Called\n" RESET);
@@ -297,6 +298,57 @@ exoVal* zcountCommand(linkedList* args){
         res = 0;
     }
     return newExoVal(RESP_INTEGER, numberToString(res));
+}
+
+/*
+Entry point of ZRANGE api.
+*/
+exoVal* zrangeCommand(linkedList* args){
+    if(args->size -1 != 3 && args->size -1 != 4){
+        return returnError(WRONG_NUMBER_OF_ARGUMENTS);
+    }
+    printf(CYN "zrangeCommand Called\n" RESET);
+    linkedList* result = newLinkedList();
+    listNode *tmp;
+    listNode* arg = args->head->next;
+    bool withscore = false;
+    int valid_args;
+    long long left, right, len = 0, list_size;
+
+    // return error if illegal arguments, else execute command
+    valid_args = parseRange(arg->next, &left, &right, &withscore);
+    if(valid_args == -1) {
+        return returnError(VALUE_IS_NOT_AN_INTEGER_OR_OUT_OF_RANGE);
+    } else if(valid_args == -2) {
+        return returnError(SYNTAX_ERROR);
+    }
+
+    exoVal* val = get(HASH_TABLE, arg->key);
+    skipList *sk_list = NULL;
+    skipListNode *sk_node = NULL;
+    if(val){
+        if(val->ds_type == SORTED_SET){
+            sk_list = (skipList*)val->val_obj;
+            list_size = (long long)sk_list->size;
+            left = left < 0 ? MAX(list_size + left, 0) : left;
+            right = right < 0 ? MAX(list_size + right, -1) : right;
+            right = MIN(right, list_size - 1);
+            len = MAX(right - left + 1, 0);
+            sk_node = len > 0 ? rankByOrder(sk_list, left) : NULL;
+        } else {
+            return returnError(WRONG_TYPE_OF_COMMAND_ON_TARGET_OBJECT);
+        }
+    } else {
+        sk_node = NULL;
+    }
+    while(sk_node && len--){
+        tmp = addNodeToList(result, newNode(sk_node->key, NULL));
+        if(withscore){
+            addNodeToList(result, newNode(doubleToString(sk_node->score), NULL));
+        }
+        sk_node = sk_node->next;
+    }
+    return newExoVal(RESP_ARRAY, result);
 }
 
 /*
@@ -329,6 +381,45 @@ void parseSwitches(linkedList* args, bool *xx, bool *nx, bool *ch, bool *incr){
 /*
 Utility function used by ZCOUNT api
 */
+int parseRange(listNode* args, long long *left, long long *right, bool *withscore){
+    printf(CYN "parseRange Called\n" RESET);
+    listNode *node = args;
+    exoString *tmp;
+    bool minus;
+    unsigned long num;
+    size_t count = 0;
+    char *str;
+     while(node && count < 2){
+        minus = false;
+        str = node->key->buf;
+        if(*str == '-'){
+            minus = true;
+            str++;
+        }
+        num = stringToLong(str);
+        if(num == -1){
+            return -1; //-ERR value is not an integer or out of range
+        } else {
+            num = minus ? -1 * num : num;
+            if(count == 0)
+                *left = num;
+            else 
+                *right = num;
+        }
+        count++;
+        node = node->next;
+    }
+    if(node){
+        tmp = upCase(node->key);
+        if(strcmp(tmp->buf, "WITHSCORES") == 0){
+            *withscore = true;
+        } else {
+            return -2; // -ERR syntax error
+        }
+    }
+    return 0;
+}
+
 bool parseMinMax(listNode* args, long double *left, long double *right){
     printf(CYN "parseMinMax Called\n" RESET);
     listNode *node = args;

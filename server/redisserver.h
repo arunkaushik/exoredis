@@ -26,6 +26,7 @@ void readcb(struct bufferevent *, void *);
 void errorcb(struct bufferevent *, short, void *);
 void do_accept(evutil_socket_t , short, void *);
 void writeToBuffer(exoVal *, struct evbuffer *);
+void writeRespArrayToBuffer(exoVal *, struct evbuffer *);
 void run();
 int spinServer();
 

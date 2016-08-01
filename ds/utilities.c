@@ -74,6 +74,12 @@ exoString RET_MIN_OR_MAX_IS_NOT_A_FLOAT = {
     30,
     "-ERR min or max is not a float"
 };
+
+exoString RET_VALUE_IS_NOT_AN_INTEGER_OR_OUT_OF_RANGE = {
+    44,
+    "-ERR value is not an integer or out of range"
+};
+
 /*
 exoString is a data_type to store string and its length
 it makes length operation O(1)
@@ -200,6 +206,8 @@ exoVal* returnError(int code){
         return newExoVal(RESP_ERROR, &RET_XX_AND_NX_OPTIONS_AT_THE_SAME_TIME_ARE_NOT_COMPATIBLE);
     case MIN_OR_MAX_IS_NOT_A_FLOAT:
         return newExoVal(RESP_ERROR, &RET_MIN_OR_MAX_IS_NOT_A_FLOAT);
+    case VALUE_IS_NOT_AN_INTEGER_OR_OUT_OF_RANGE:
+        return newExoVal(RESP_ERROR, &RET_VALUE_IS_NOT_AN_INTEGER_OR_OUT_OF_RANGE);
     }
     return returnNull();
 }

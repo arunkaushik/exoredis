@@ -27,3 +27,4 @@ void printSkipList(skipList*);
 bool parseArgs(listNode* , long double [], exoString* []);
 void parselongDouble(char *str);
 unsigned long rankByScore(skipList*, long double, bool);
+skipListNode* rankByOrder(skipList*, long long);

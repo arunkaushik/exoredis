@@ -25,6 +25,8 @@ exoVal* zaddCommand(linkedList*);
 void parseSwitches(linkedList*, bool *, bool *, bool *, bool *);
 exoVal* zcardCommand(linkedList*);
 exoVal* zcountCommand(linkedList*);
+exoVal* zrangeCommand(linkedList*);
 bool parseMinMax(listNode*, long double *, long double *);
+int parseRange(listNode*, long long *, long long *, bool*);
 
 #endif

@@ -7,14 +7,14 @@ class SortedsetTest < Base
     super
     @answers = {}
     @rand_get = []
-    (0..NUMBER_OF_TEST_CASES/10).each do |i|
-      str = random_string
+    (0..1).each do |i|
+      str = random_string(20)
       answers[str] = {}
     end
 
     answers.keys.each do |set|
-      (0..NUMBER_OF_TEST_CASES/2).each do |i|
-        str = random_string
+      (0..NUMBER_OF_TEST_CASES/50).each do |i|
+        str = random_string(20)
         score = rand(1.2...76778.9).round(6)
         score = -1 * score if rand(0..1)
         answers[set][str] = score
@@ -32,6 +32,7 @@ class SortedsetTest < Base
     zaddnxch
     zaddincr
     zaddxxnxincr
+    zrange
     zcard
     zcount
   end
@@ -185,4 +186,44 @@ class SortedsetTest < Base
     end
   end
 
+  def zrange
+    mems = []
+    scores = []
+    answers.each do|set, data|
+      data.each do |key, score|
+        left = rand(0..data.size)
+        left = left * -1 if rand(0..1)
+        right = rand(0..data.size*2)
+        right = right * -1 if rand(0..1)
+        sw = "withscores"
+        withscore = rand(0..1)
+        len = 4
+        len += 1 if withscore
+        q = "*#{len}\r\n$6\r\nzrange\r\n$#{set.length}\r\n#{set}\r\n$#{left.to_s.length}\r\n#{left.to_s}\r\n$#{right.to_s.length}\r\n#{right.to_s}\r\n"
+        q = q + "$#{sw.length}\r\n#{sw}\r\n" if withscore
+        arr = answers[set].to_a.dup
+        arr.sort!{|x, y| x.last <=> y.last}
+        mems = arr.map{|i| i[0]}
+        scores = arr.map{|i| i[1]}
+        expected = "*"
+        if(mems[left..right])
+          exp_len = withscore ? mems[left..right].length*2 : mems[left..right].length
+          expected = expected + "#{exp_len}\r\n"
+          arr[left..right].each_with_index do |e|
+            expected = expected + "$#{e[0].length}\r\n#{e[0]}\r\n"
+            final_score = e[1]
+            fin_scr = final_score.to_s + "0"*(6 - final_score.to_s.split('.').last.length)
+            expected = expected + "$#{fin_scr.length}\r\n#{fin_scr}\r\n" if withscore
+          end
+        else
+            expected = expected + "0\r\n"
+        end
+        send_message q
+        msg = get_message
+        assert(msg, expected, q)
+      end
+    end
+  end
 end
+
+#SortedsetTest.new().perform
