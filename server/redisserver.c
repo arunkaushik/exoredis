@@ -8,11 +8,14 @@ int main(){
 
     HASH_TABLE = newHashTable(INITIAL_SIZE);
 
-    if(COMMANDS && HASH_TABLE){
+    GARBAGE_LIST = newGarbageList();
+
+    if(COMMANDS && HASH_TABLE && GARBAGE_LIST){
         spinServer();       
     } else {
         freeHashTable(COMMANDS);
         freeHashTable(HASH_TABLE);
+        free(GARBAGE_LIST);
         printf(RED "Failed to initialize server.\n" RESET);
         return EXIT_FAILURE; 
     }
@@ -101,7 +104,9 @@ void readcb(struct bufferevent *bev, void *ctx){
         result = returnError(PROTOCOL_ERROR);
     }
     
-    writeToBuffer(result, output);  
+    writeToBuffer(result, output);
+
+    freeGarbage();
     // Have to free tokens THINK ABOUT IT    
 
     // ****** BELOW CODE IS FOR HANDLEING BUFFER LIMITATIONS
@@ -212,7 +217,7 @@ exoVal* commandDispatcher(argList* tokens){
         result = returnError(COMMAND_NOT_FOUND);
     }
 
-    if(!node || cmd->free_args){
+    if(!node || cmd->free_args || result->ds_type == RESP_ERROR){
         freeAllArgs(tokens);
     } else {
         freeDeadArgs(tokens);
@@ -282,7 +287,35 @@ void actionBeforeExit(){
     printf("%s\n","I will do some work before exit.");
     freeHashTable(COMMANDS);
     freeHashTable(HASH_TABLE);
+    freeGarbage();
     return;
+}
+
+void freeGarbage(){
+    garbageNode *node = GARBAGE_LIST->head;
+    garbageNode *tmp;
+    exoVal *val;
+    while(node){
+        tmp = node->next;
+        val = node->garbage;
+        if(val){
+            switch(val->ds_type){
+            case BITMAP:
+                freebitmapNode((bitmapNode*)val->val_obj);
+                break;
+            case SORTED_SET:
+                freeSkipList((skipList*)val->val_obj);
+                break;
+            case BULKSTRING:
+                freeExoString((exoString*)val->val_obj);
+                break;
+            }
+            free(val);
+        }
+        free(node);
+        node = tmp;
+    }
+    GARBAGE_LIST->head = GARBAGE_LIST->tail = NULL;
 }
 
 /*

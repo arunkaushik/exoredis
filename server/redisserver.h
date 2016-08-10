@@ -30,6 +30,7 @@ void writeRespArrayToBuffer(exoVal *, struct evbuffer *);
 void run();
 int spinServer();
 void loadFromDB();
+void freeGarbage();
 
 int ConnectFD;
 int SocketFD;

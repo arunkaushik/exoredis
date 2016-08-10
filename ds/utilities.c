@@ -238,18 +238,8 @@ Frees memory holded by exoVal object
 */
 void freeExoVal(exoVal* val){
     if(val){
-        switch(val->ds_type){
-        case BITMAP:
-            freebitmapNode(val->val_obj);
-            break;
-        case SORTED_SET:
-            //freeSkipList(val->val_obj);
-            break;
-        case BULKSTRING:
-            freeExoString(val->val_obj);
-            break;
-        }
-        free(val);
+        garbageNode *garbage = newGarbageNode(val);
+        addGarbageToList(GARBAGE_LIST, garbage);
     }
 }
 
@@ -453,4 +443,36 @@ void setAllDead(argList *list){
         node->dead = true;
         node = node->next;
     }
+}
+
+garbageNode* newGarbageNode(exoVal *garbage){
+    garbageNode* tmp = (garbageNode*)malloc(sizeof( garbageNode));
+    if(tmp){
+        tmp->garbage = garbage;
+        tmp->next = NULL;
+    }
+    return tmp;
+}
+
+garbageList* newGarbageList(){
+    garbageList* gl = (garbageList*)malloc(sizeof(garbageList));
+    if(gl){
+        gl->head = NULL;
+    }
+    return gl;
+}
+
+garbageNode* addGarbageToList(garbageList *list, garbageNode *node){
+    if(list == NULL || node == NULL){
+        return NULL;
+    } else {
+        if(list->head){
+            list->tail->next = node;
+            list->tail = list->tail->next;
+        } else {
+            list->head = node;
+            list->tail = list->head;
+        }
+        return node;
+    } 
 }

@@ -20,6 +20,7 @@
 #define EXOCMD 101
 #define BITMAP 102
 #define SORTED_SET 103
+#define SORTED_SET_ENTRY 104
 
 // ERRORS
 

@@ -38,6 +38,16 @@ typedef struct argList{
     argListNode *tail;
 }argList;
 
+typedef struct garbageNode{
+    exoVal *garbage;
+    struct garbageNode *next;
+}garbageNode;
+
+typedef struct garbageList{
+    garbageNode *head;
+    garbageNode *tail;
+}garbageList;
+
 exoString* newString(void *, unsigned long);
 exoVal* newExoVal(size_t, void *);
 void printString(exoString*);
@@ -65,4 +75,9 @@ void freeAllArgs(argList *);
 void freeArgNode(argListNode *);
 void setAllDead(argList *);
 
+garbageList* newGarbageList();
+garbageNode* newGarbageNode(exoVal *);
+garbageNode* addGarbageToList(garbageList *, garbageNode *);
+
+garbageList *GARBAGE_LIST;
 #endif

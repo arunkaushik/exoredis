@@ -208,7 +208,7 @@ skipListNode* addNodeToSkiplist(skipList *list, exoString* key, long double scor
     for(i = raise_to + 1; i <= list->levels; i++){
         dirty[i]->children++;
     }
-    set(list->table, key, newExoVal(SORTED_SET, tmp));
+    set(list->table, key, newExoVal(SORTED_SET_ENTRY, tmp));
     list->size++;
     return tmp;
 }
