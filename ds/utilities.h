@@ -26,6 +26,18 @@ typedef struct bitmapNode{
     unsigned long len;
 }bitmapNode;
 
+typedef struct argListNode{
+    exoString *key;
+    bool dead;
+    struct argListNode *next;
+}argListNode;
+
+typedef struct argList{
+    unsigned long size;
+    argListNode *head;
+    argListNode *tail;
+}argList;
+
 exoString* newString(void *, unsigned long);
 exoVal* newExoVal(size_t, void *);
 void printString(exoString*);
@@ -44,5 +56,13 @@ exoVal* returnPong();
 void freebitmapNode(bitmapNode*);
 long double stringTolongDouble(char *);
 exoString* doubleToString(long double);
+
+argList* newArgList();
+argListNode* newArg(exoString *);
+argListNode* addArgToList(argList *, argListNode *);
+void freeDeadArgs(argList *);
+void freeAllArgs(argList *);
+void freeArgNode(argListNode *);
+void setAllDead(argList *);
 
 #endif

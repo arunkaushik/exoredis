@@ -7,13 +7,13 @@ class SortedsetTest < Base
     super
     @answers = {}
     @rand_get = []
-    (0..1).each do |i|
+    (0..4).each do |i|
       str = random_string(20)
       answers[str] = {}
     end
 
     answers.keys.each do |set|
-      (0..NUMBER_OF_TEST_CASES/50).each do |i|
+      (0..NUMBER_OF_TEST_CASES/500).each do |i|
         str = random_string(20)
         score = rand(1.2...76778.9).round(6)
         score = -1 * score if rand(0..1)
@@ -225,5 +225,3 @@ class SortedsetTest < Base
     end
   end
 end
-
-#SortedsetTest.new().perform

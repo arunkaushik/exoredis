@@ -76,7 +76,7 @@ listNode* removeNodeFromList(linkedList *list, listNode *node){
             }
         }
         list->size--;
-        printf("%s %s\n", GRN "node with key added to List : " RESET, node->key->buf);
+        printf("%s %s\n", GRN "node with key removed from the List : " RESET, node->key->buf);
         return node;
     } 
 }
@@ -120,15 +120,20 @@ listNode* findNode(linkedList *list, exoString *key){
 replaces the value in a given list node with new value.
 value is a object of exoVal data type
 */
-exoVal* replaceNodeValue(listNode *node, exoVal *newval){
+exoVal* replaceNodeValue(listNode *node, exoString *newkey, exoVal *newval){
     if(node == NULL || newval == NULL){
         return NULL;
         printf(GRN "node value Not replaced\n" RESET);
     } else {
         exoVal *tmp;
+        exoString *tmp_k;
         tmp = node->value;
+        tmp_k = node->key;
+        node->key = newkey;
         node->value = newval;
-        free(tmp);
+        
+        freeExoString(tmp_k);
+        freeExoVal(tmp);
         printf("%s %s\n", GRN "Node value replaced for node with key: " RESET, node->key->buf);
         return newval;
     }

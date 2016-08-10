@@ -17,14 +17,16 @@ typedef struct skipList{
 
 skipList* newSkipList();
 skipListNode* newSkipListNode(exoString*, long double);
-exoVal* addToSortedSet(skipList*, bool, bool, bool, bool, linkedList*);
-exoVal* addOrUpdateMember(skipList*, bool, bool, bool, listNode*, size_t);
-exoVal* scoreIncrement(skipList*, listNode*, bool);
+exoVal* addToSortedSet(skipList*, bool, bool, bool, bool, argList*);
+exoVal* addOrUpdateMember(skipList*, bool, bool, bool, argListNode*, size_t);
+exoVal* scoreIncrement(skipList*, argListNode*, bool);
 skipListNode* addNodeToSkiplist(skipList *, exoString*, long double);
 void removeNodeFromSkipList(skipList *, exoString*, long double, skipListNode*);
 size_t randomLevelRaiser();
 void printSkipList(skipList*);
-bool parseArgs(listNode* , long double [], exoString* []);
+bool parseArgs(argListNode* , long double [], exoString* []);
 void parselongDouble(char *str);
 unsigned long rankByScore(skipList*, long double, bool);
 skipListNode* rankByOrder(skipList*, long long);
+void freeSkipList(skipList* );
+void freeSkipListNode(skipListNode *);

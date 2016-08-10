@@ -36,13 +36,14 @@ skipListNode* newSkipListNode(exoString* key, long double score){
 /*
 Adds new node to sorted set based on switches(xx,nx,incr)
 */
-exoVal* addToSortedSet(skipList* list, bool xx, bool nx, bool ch, bool incr, linkedList* args){
+exoVal* addToSortedSet(skipList* list, bool xx, bool nx, bool ch, bool incr, argList* args){
     printf(RED "addToSortedSet Called\n" RESET);
     if(nx && xx){
+        setAllDead(args);
         return returnError(XX_AND_NX_OPTIONS_AT_THE_SAME_TIME_ARE_NOT_COMPATIBLE);
     }
     size_t switches = 0, headers, move;
-    listNode* arg = args->head;
+    argListNode* arg = args->head;
     if(nx || xx) switches++;
     if(ch) switches++;
     if(incr) switches++;
@@ -53,12 +54,17 @@ exoVal* addToSortedSet(skipList* list, bool xx, bool nx, bool ch, bool incr, lin
         while(move--)
             arg = arg->next;
         if(incr){
-            return args->size - switches == 4 ? scoreIncrement(list, arg, nx) : \
-                                        returnError(INCR_OPTION_SUPPORTS_A_SINGLE_INCREMENT_ELEMENT_PAIR);
+            if(args->size - switches == 4 ){
+                return scoreIncrement(list, arg, nx);
+            } else {
+                setAllDead(args);
+                return returnError(INCR_OPTION_SUPPORTS_A_SINGLE_INCREMENT_ELEMENT_PAIR);
+            }
         } else {
             return addOrUpdateMember(list, xx, nx, ch, arg, args->size - switches - 2);
         }
     } else {
+        setAllDead(args);
         return returnError(SYNTAX_ERROR);
     }
 }
@@ -67,7 +73,7 @@ exoVal* addToSortedSet(skipList* list, bool xx, bool nx, bool ch, bool incr, lin
 Add elements in skiplist stored at list. Returns number of elements added or changed
 based on switches(xx, nx, ch). Handels 2*n argumentss
 */
-exoVal* addOrUpdateMember(skipList* list, bool xx, bool nx, bool ch, listNode* args, size_t arg_size){
+exoVal* addOrUpdateMember(skipList* list, bool xx, bool nx, bool ch, argListNode* args, size_t arg_size){
     printf(RED "addOrUpdateMember Called\n" RESET);
     skipListNode* target = NULL;
     size_t changed = 0, new_insert = 0, res, i;
@@ -117,7 +123,7 @@ exoVal* addOrUpdateMember(skipList* list, bool xx, bool nx, bool ch, listNode* a
 /*
 Increment score of the member passed and re-inserts it in correct place
 */
-exoVal* scoreIncrement(skipList* list, listNode* args, bool nx){
+exoVal* scoreIncrement(skipList* list, argListNode* args, bool nx){
     printf(RED "scoreIncrement Called\n" RESET);
     skipListNode* target = NULL;
     long double res = 0;
@@ -129,6 +135,8 @@ exoVal* scoreIncrement(skipList* list, listNode* args, bool nx){
         exoVal* tmp = get(list->table, members[0]);
         if(tmp){
             if(nx){
+                // setting score and member as dead to free memory
+                args->dead = args->next->dead = true;
                 return returnNull();
             } else {
                 target = (skipListNode*)tmp->val_obj;
@@ -225,7 +233,7 @@ void removeNodeFromSkipList(skipList *list, exoString *key, long double score, s
 
     if(node == NULL) return; // dirty code, its here just to make sure work is really required.
 
-    skipListNode *tmp = NULL;
+    skipListNode *tmp = NULL, *to_free = node;
     skipListNode *dirty[SKIPLIST_MAX_LEVEL];
     int i;
     memset(dirty, 0, sizeof(dirty));
@@ -252,9 +260,47 @@ void removeNodeFromSkipList(skipList *list, exoString *key, long double score, s
                 dirty[i]->children--;
             }
         }
+        freeSkipListNode(to_free);
+        del(list->table, key);
         // Not altering the levels of the list. Let it sit as it is. Could be a improvement
         list->size--;
     }
+}
+
+void freeSkipListNode(skipListNode *node){
+    printf("%s %s %LF\n",RED "freeSkipListNode Called with key and score: " RESET, node->key->buf, node->score);
+    /*
+    * A skiplistnode in all levels share the same exoString as the key. key will be freed by
+    * del command which takes care of removing the entry from skiplist's hashtable
+    */
+    skipListNode *tmp = NULL;
+    while(node){
+        tmp = node->down;
+        free(node);
+        node = tmp;
+    }
+}
+
+/*
+Prints the skiplist to the screen
+*/
+void freeSkipList(skipList* list){
+    printf(RED "freeSkipList Called: \n" RESET);
+    int i = list->levels;
+    skipListNode *node = list->head, *head = list->head, *tmp, *tmp_head;
+    while(i>=0){
+        tmp_head = head->down;
+        while(node) {
+            tmp = node->next;
+            free(node);
+            node = tmp;
+        }
+        node = tmp_head;
+        head = tmp_head;
+        i--;
+    }
+    freeHashTable(list->table);
+    free(list);
 }
 
 /*
@@ -284,14 +330,16 @@ Checks the validity of all arguments before starting the add operation
 It converts the arguments in required data type.
 Return true is parsing is successful and args are valids. Return false otherwise
 */
-bool parseArgs(listNode* args, long double scores[], exoString* members[]){
+bool parseArgs(argListNode* args, long double scores[], exoString* members[]){
     printf(RED "parseArgs Called\n" RESET);
-    listNode *node = args;
+    argListNode *node = args;
     bool minus;
     char *str;
     long double score;
     size_t i = 0;
     while(node){
+        // setting all score nodes as dead
+        node->dead = true;
         minus = false;
         str = node->key->buf;
         if(*str == '-'){

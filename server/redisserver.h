@@ -16,8 +16,8 @@
 
 #define MAX_LINE 100000
 
-exoVal* commandDispatcher(linkedList*);
-exoVal* executeCommand(exoCmd*, linkedList*);
+exoVal* commandDispatcher(argList*);
+exoVal* executeCommand(exoCmd*, argList*);
 bool validArgs(size_t, unsigned long, bool);
 void sig_handler(int);
 int shutdownServer();
@@ -29,6 +29,7 @@ void writeToBuffer(exoVal *, struct evbuffer *);
 void writeRespArrayToBuffer(exoVal *, struct evbuffer *);
 void run();
 int spinServer();
+void loadFromDB();
 
 int ConnectFD;
 int SocketFD;

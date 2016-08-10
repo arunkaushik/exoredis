@@ -116,6 +116,96 @@ exoVal* newExoVal(size_t ds_type, void *obj){
         return val; 
     }
 }
+/*
+ArgList is used to create tokens of exostring from input buffer.
+Buffer is read and parsed with one of the three protocol parser
+respTokenizer, simpleTokenizer or fileLineTokenizer
+
+Below function returns a new empty argument list
+*/
+argList* newArgList(){
+    argList* ll = (argList*)malloc(sizeof(argList));
+    if(ll){
+        ll->head = NULL;
+        ll->tail = NULL;
+        ll->size = 0;
+    }
+    printf(GRN "new argList created\n" RESET);
+    return ll;
+}
+
+/*
+return a new arg node with given exostring
+*/
+argListNode* newArg(exoString *key){
+    argListNode* tmp = (argListNode*)malloc(sizeof( argListNode));
+    if(tmp){
+        tmp->key = key;
+        tmp->dead = false;
+        tmp->next = NULL;
+    }
+    printf("%s %s\n", GRN "new argListNode created with key: " RESET, key->buf);
+    return tmp;
+}
+
+/*
+adds argument node to the args list
+*/
+argListNode* addArgToList(argList *list, argListNode *node){
+    if(list == NULL || node == NULL){
+        printf(GRN "node NOT added to List\n" RESET);
+        return NULL;
+    } else {
+        if(list->head){
+            list->tail->next = node;
+            list->tail = list->tail->next;
+        } else {
+            list->head = node;
+            list->tail = list->head;
+        }
+        list->size++;
+        printf("%s %s\n", GRN "Arg with key added to List : " RESET, node->key->buf);
+        return node;
+    } 
+}
+
+/*
+Frees a arg list completely along with all exostrings
+*/
+void freeAllArgs(argList *args){
+    argListNode *node = args->head;
+    argListNode *tmp;
+    while(node){
+        tmp = node->next;
+        freeArgNode(node);
+        node = tmp;
+    }
+    free(args);
+}
+
+/*
+Frees a arg list completely along with exostrings of all the arguments marked as dead.
+arguments marked as non-dead are also freed but their exostring persists.
+*/
+void freeDeadArgs(argList *args){
+    argListNode *node = args->head;
+    argListNode *tmp;
+    while(node){
+        tmp = node->next;
+        if(node->dead){
+            freeArgNode(node);
+        } else {
+            free(node);
+        }
+        node = tmp;
+    }
+    free(args);
+}
+
+void freeArgNode(argListNode *node){
+    freeExoString(node->key);
+    free(node);
+}
 
 /*
 Prints exoString with length
@@ -147,10 +237,18 @@ size_t stringHash(char *str){
 Frees memory holded by exoVal object
 */
 void freeExoVal(exoVal* val){
-    if(val && val->ds_type == BITMAP){
-        freebitmapNode(val->val_obj);
-        free(val);
-    } else if(val){
+    if(val){
+        switch(val->ds_type){
+        case BITMAP:
+            freebitmapNode(val->val_obj);
+            break;
+        case SORTED_SET:
+            //freeSkipList(val->val_obj);
+            break;
+        case BULKSTRING:
+            freeExoString(val->val_obj);
+            break;
+        }
         free(val);
     }
 }
@@ -347,4 +445,12 @@ long double stringTolongDouble(char *str){
         frac = (double)fraction/frac_len;
     }
     return res + frac;
+}
+
+void setAllDead(argList *list){
+    argListNode *node = list->head;
+    while(node){
+        node->dead = true;
+        node = node->next;
+    }
 }

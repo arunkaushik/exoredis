@@ -35,7 +35,7 @@ exoVal* set(hashTable* ht, exoString* key, exoVal* val){
     size_t str_hash = stringHash(key->buf);
     listNode* node = findNode(ht->buckets[str_hash], key);
     if(node){
-        return replaceNodeValue(node, val);
+        return replaceNodeValue(node, key, val);
     } else {
         node = newNode(key, val);
         if(addNodeToList(ht->buckets[str_hash], node)){

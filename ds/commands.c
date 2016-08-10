@@ -15,17 +15,18 @@ of the APIs exposed to clients, like GET, SET, etc.
 It also folds the function pointers to which command execution shall be dispatched
 */
 struct exoCmd commandTable[] = {
-  {"GET", BULKSTRING, 1, false, false, getCommand},
-  {"SET", BULKSTRING, 2, true, false, setCommand},
-  {"DEL", BULKSTRING, 1, false, true, delCommand},
-  {"PING", SIMPLE_STRING, 0, false, false, pingCommand},
-  {"FLUSHALL", SIMPLE_STRING, 0, false, false, flushCommand},
-  {"GETBIT", BITMAP, 2, false, false, getbitCommand},
-  {"SETBIT", BITMAP, 3, false, false, setbitCommand},
-  {"ZADD", SORTED_SET, 3, true, true, zaddCommand},
-  {"ZCARD", SORTED_SET, 1, false, false, zcardCommand},
-  {"ZCOUNT", SORTED_SET, 3, false, false, zcountCommand},
-  {"ZRANGE", SORTED_SET, 3, false, true, zrangeCommand}
+  {"GET", BULKSTRING, 1, false, false, true, getCommand},
+  {"SET", BULKSTRING, 2, true, false, false, setCommand},
+  {"DEL", BULKSTRING, 1, false, true, true, delCommand},
+  {"PING", SIMPLE_STRING, 0, false, false, true, pingCommand},
+  {"FLUSHALL", SIMPLE_STRING, 0, false, false, true, flushCommand},
+  {"GETBIT", BITMAP, 2, false, false, true, getbitCommand},
+  {"SETBIT", BITMAP, 3, false, false, false, setbitCommand},
+  {"ZADD", SORTED_SET, 3, true, true, false, zaddCommand},
+  {"ZCARD", SORTED_SET, 1, false, false, true, zcardCommand},
+  {"ZCOUNT", SORTED_SET, 3, false, false, true, zcountCommand},
+  {"ZRANGE", SORTED_SET, 3, false, true, true, zrangeCommand},
+  {"SAVE", BULKSTRING, 0, false, false, true, saveCommand}
 };
 
 /*
@@ -71,12 +72,13 @@ exoCmd* addCommand(hashTable *ht, exoCmd* cmd){
 /*
 Entry point for GET api
 */
-exoVal* getCommand(linkedList* args){
+exoVal* getCommand(argList* args){
     printf(CYN "getCommand Called\n" RESET);
-    listNode* node = args->head;
+    argListNode* node = args->head;
 
     // head holds command node, actual args starts from head->next
     exoVal* val = get(HASH_TABLE, node->next->key);
+
     if(val && val->ds_type == BULKSTRING){
         return val;
     } else if(val && val->ds_type != BULKSTRING) {
@@ -91,9 +93,9 @@ Entry point of SET api.
 SET command overwirtes the target value if it exists, 
 So no need to check the ds_type of target object. Simply over-write
 */
-exoVal* setCommand(linkedList* args){
+exoVal* setCommand(argList* args){
     printf(CYN "setCommand Called\n" RESET);
-    listNode* node = args->head->next;
+    argListNode* node = args->head->next;
     exoString* key;
     exoVal* val;
     while(node){
@@ -112,12 +114,12 @@ exoVal* setCommand(linkedList* args){
 Entry point of DEL api.
 Deletes the entry from the hash table.
 */
-exoVal* delCommand(linkedList* args){
+exoVal* delCommand(argList* args){
     printf(CYN "delCommand Called\n" RESET);
     unsigned long count = 0;
-    listNode* node = args->head;
 
     // head holds command node, actual args starts from head->next
+    argListNode* node = args->head->next;
     if(args->size < 2){
         return returnError(WRONG_NUMBER_OF_ARGUMENTS);
     } else {
@@ -132,14 +134,14 @@ exoVal* delCommand(linkedList* args){
 /*
 Entry point of PING api.
 */
-exoVal* pingCommand(linkedList* args){
+exoVal* pingCommand(argList* args){
     return returnPong();
 }
 
 /*
 Entry point of FLUSHALL api.
 */
-exoVal* flushCommand(linkedList* args){
+exoVal* flushCommand(argList* args){
     hashTable *new_table = newHashTable(INITIAL_SIZE);
     if(new_table){
         freeHashTable(HASH_TABLE);
@@ -153,12 +155,12 @@ exoVal* flushCommand(linkedList* args){
 /*
 Entry point of GETBIT api.
 */
-exoVal* getbitCommand(linkedList* args){
+exoVal* getbitCommand(argList* args){
     bitmapNode* node;
     bool result;
     unsigned long pos;
     printf(CYN "getbitCommand Called\n" RESET);
-    listNode* arg = args->head->next;
+    argListNode* arg = args->head->next;
     pos = stringToLong(arg->next->key->buf);
     if(pos == -1){
         return returnError(OFFSET_NOT_INT_OR_OUT_OF_RANGE);
@@ -181,33 +183,37 @@ exoVal* getbitCommand(linkedList* args){
 /*
 Entry point of SETBIT api.
 */
-exoVal* setbitCommand(linkedList* args){
+exoVal* setbitCommand(argList* args){
     bitmapNode* node;
     bool result;
     unsigned long pos;
     int bit;
-    listNode* arg = args->head->next;
+    argListNode* arg = args->head->next;
     printf(CYN "setbitCommand Called\n" RESET);
 
     pos = stringToLong(arg->next->key->buf);
     if(pos == -1){
+        setAllDead(args);
         return returnError(OFFSET_NOT_INT_OR_OUT_OF_RANGE);
     }
     bit = stringToBit(arg->next->next->key);
     if(bit == -1){
+        setAllDead(args);
         return returnError(BIT_NOT_INT_OR_OUT_OF_RANGE);
     }
 
     exoVal* val = get(HASH_TABLE, arg->key);
 
     if(val){
+        setAllDead(args);
         if(val->ds_type == BITMAP){
             node = (bitmapNode*)val->val_obj;
             result = setBit(node, pos, bit);
         } else {
             return returnError(WRONG_TYPE_OF_COMMAND_ON_TARGET_OBJECT);
         }
-    } else {     
+    } else {
+            args->head->dead = args->head->next->next->dead = args->head->next->next->next->dead = true;
             node = initBitmapNode(pos, bit);
             val = newExoVal(BITMAP, node);
             set(HASH_TABLE, arg->key, val);
@@ -220,10 +226,10 @@ exoVal* setbitCommand(linkedList* args){
 Entry point of ZADD api.
 Checks of arguments by itself
 */
-exoVal* zaddCommand(linkedList* args){
+exoVal* zaddCommand(argList* args){
     printf(CYN "zaddCommand Called\n" RESET);
     bool xx = false, nx = false, ch = false, incr = false;
-    listNode* arg = args->head->next;
+    argListNode* arg = args->head->next;
     exoVal* ret;
     exoVal* val = get(HASH_TABLE, arg->key);
     skipList *sk_list = NULL;
@@ -231,6 +237,7 @@ exoVal* zaddCommand(linkedList* args){
         if(val->ds_type == SORTED_SET){
             sk_list = (skipList*)val->val_obj;
         } else {
+            setAllDead(args);
             return returnError(WRONG_TYPE_OF_COMMAND_ON_TARGET_OBJECT);
         }
     } else {
@@ -250,9 +257,9 @@ exoVal* zaddCommand(linkedList* args){
 /*
 Entry point of ZCARD api.
 */
-exoVal* zcardCommand(linkedList* args){
+exoVal* zcardCommand(argList* args){
     printf(CYN "zcardCommand Called\n" RESET);
-    listNode* arg = args->head->next;
+    argListNode* arg = args->head->next;
     unsigned long res;
     exoVal* val = get(HASH_TABLE, arg->key);
     skipList *sk_list = NULL;
@@ -272,9 +279,9 @@ exoVal* zcardCommand(linkedList* args){
 /*
 Entry point of ZCOUNT api.
 */
-exoVal* zcountCommand(linkedList* args){
+exoVal* zcountCommand(argList* args){
     printf(CYN "zcountCommand Called\n" RESET);
-    listNode* arg = args->head->next;
+    argListNode* arg = args->head->next;
     bool valid_args = false;
     unsigned long res, ma, mi;
     long double left, right;
@@ -303,14 +310,14 @@ exoVal* zcountCommand(linkedList* args){
 /*
 Entry point of ZRANGE api.
 */
-exoVal* zrangeCommand(linkedList* args){
+exoVal* zrangeCommand(argList* args){
     if(args->size -1 != 3 && args->size -1 != 4){
         return returnError(WRONG_NUMBER_OF_ARGUMENTS);
     }
     printf(CYN "zrangeCommand Called\n" RESET);
     linkedList* result = newLinkedList();
     listNode *tmp;
-    listNode* arg = args->head->next;
+    argListNode* arg = args->head->next;
     bool withscore = false;
     int valid_args;
     long long left, right, len = 0, list_size;
@@ -352,13 +359,49 @@ exoVal* zrangeCommand(linkedList* args){
 }
 
 /*
+Entry point of SAVE api.
+*/
+exoVal* saveCommand(){
+    linkedList* list = NULL;
+    listNode *node = NULL;
+    char buffer[800000];
+    int i;
+    FILE *pFile;
+    pFile = fopen("data.rdb", "w+");
+
+    for(i = 0; i < HASH_TABLE->size; i++){
+        list = HASH_TABLE->buckets[i];
+        node = list->head;
+
+        while(node){
+            switch(node->value->ds_type){
+            case BULKSTRING:
+                writeHashMapToFile(node, pFile, buffer);
+                break;
+            case BITMAP:
+                //writeHBitMapToFile(node, pFile, buffer);
+                break;
+            case SORTED_SET:
+                writeSkiplistToFile(node, pFile, buffer);
+                break;
+            }
+            node = node->next;
+        }
+    }
+    fclose(pFile);
+    return returnOK();
+}
+
+/* ------------------ utilitiy functions begin here ------------------ */
+
+/*
 Utility function used by ZADD, ZCOUNT api
 */
-void parseSwitches(linkedList* args, bool *xx, bool *nx, bool *ch, bool *incr){
+void parseSwitches(argList* args, bool *xx, bool *nx, bool *ch, bool *incr){
     printf(CYN "parseSwitches Called\n" RESET);
     char *str;
     exoString *tmp;
-    listNode *node = args->head->next->next; // move node to third node after cmd and key
+    argListNode *node = args->head->next->next; // move node to third node after cmd and key
     while(node){
         str = node->key->buf;
         if((*str >= '0' && *str <= '9') || *str == '.' || *str == '-') // score and member pair started
@@ -381,9 +424,9 @@ void parseSwitches(linkedList* args, bool *xx, bool *nx, bool *ch, bool *incr){
 /*
 Utility function used by ZCOUNT api
 */
-int parseRange(listNode* args, long long *left, long long *right, bool *withscore){
+int parseRange(argListNode* args, long long *left, long long *right, bool *withscore){
     printf(CYN "parseRange Called\n" RESET);
-    listNode *node = args;
+    argListNode *node = args;
     exoString *tmp;
     bool minus;
     unsigned long num;
@@ -420,9 +463,12 @@ int parseRange(listNode* args, long long *left, long long *right, bool *withscor
     return 0;
 }
 
-bool parseMinMax(listNode* args, long double *left, long double *right){
+/*
+Utility function used by ZRANGE api
+*/
+bool parseMinMax(argListNode* args, long double *left, long double *right){
     printf(CYN "parseMinMax Called\n" RESET);
-    listNode *node = args;
+    argListNode *node = args;
     bool minus;
     long double score;
     size_t count = 0;
@@ -448,4 +494,120 @@ bool parseMinMax(listNode* args, long double *left, long double *right){
         node = node->next;
     }
     return true;
+}
+
+/*
+Utility function used by SAVE api
+*/
+void writeHashMapToFile(listNode *node, FILE *pFile, char *buffer){
+    exoString *tmp;
+    char *runner = buffer;
+    memcpy(runner, "*3 $3 set ", strlen("*3 $3 set "));
+    runner += strlen("*3 $3 set ");
+
+    // key
+    tmp = node->key;
+    runner = lineBufferToResp(tmp, runner);
+
+    // value
+    tmp = (exoString*)node->value->val_obj;
+    runner = lineBufferToResp(tmp, runner);
+
+    *runner = '\0';
+
+    fprintf(pFile, "%s\n", buffer);
+}
+
+void writeHBitMapToFile(listNode *node, FILE *pFile, char *buffer){
+    exoString *tmp;
+    bitmapNode* bm_node = (bitmapNode*)node->value->val_obj;
+    unsigned long num_of_bytes = bm_node->len * 8;
+    unsigned long batch = 700000, w, i;
+    void *word = bm_node->mem;
+    char *runner;
+
+    while(num_of_bytes > 0){
+        runner = buffer;
+        memcpy(runner, "*3 $10 loadbitmap ", strlen("*3 $10 loadbitmap "));
+        runner += strlen("*3 $10 loadbitmap ");
+
+        // key
+        tmp = node->key;
+        runner = lineBufferToResp(tmp, runner);
+
+        // number of words
+        w = MIN(num_of_bytes, batch);
+
+        tmp = numberToString(w);
+        runner = lineBufferToResp(tmp, runner);
+
+        memcpy(runner, word, w);
+        runner += w;
+        *runner = ' ';
+        runner++;
+        *runner = '\n';
+        runner++;
+        //fprintf(pFile, "%s ", buffer);
+        fwrite(buffer, runner - buffer + 1, 1, pFile);
+        //fwrite(word, w, 1, pFile);
+
+        //fprintf(pFile, "%s\n", " ");
+        num_of_bytes -= w;
+        word += w;
+    }
+}
+
+void writeSkiplistToFile(listNode *node, FILE *pFile, char *buffer){
+    exoString *tmp;
+    char *runner = buffer;
+    skipList *sk_list;
+    skipListNode *sk_node;
+    sk_list = (skipList*)node->value->val_obj;
+    sk_node = sk_list->head;
+    while(sk_node->down) 
+        sk_node = sk_node->down;
+
+    sk_node = sk_node->next;
+
+    while(sk_node){
+        char *runner = buffer;
+        memcpy(runner, "*4 $4 zadd ", strlen("*4 $4 zadd "));
+        runner += strlen("*4 $4 zadd ");
+        //key
+        tmp = node->key;
+        runner = lineBufferToResp(tmp, runner);
+
+        // score
+        tmp = doubleToString(sk_node->score);
+        runner = lineBufferToResp(tmp, runner);
+
+        // member
+        tmp = sk_node->key;
+        runner = lineBufferToResp(tmp, runner);
+
+        *runner = '\0';
+        fprintf(pFile, "%s\n", buffer);
+
+        sk_node = sk_node->next;
+    }
+}
+
+
+char* lineBufferToResp(exoString *str, char *runner){
+    exoString *tmp;
+    tmp = numberToString(str->len);
+    *runner = '$';
+    runner++;
+    memcpy(runner, tmp->buf, tmp->len);
+    runner += tmp->len;
+    *runner = ' ';
+    runner++;
+
+    //key
+    tmp = str;
+    memcpy(runner, tmp->buf, tmp->len);
+    runner += tmp->len;
+    *runner = ' ';
+    runner++;
+    return runner;
 }

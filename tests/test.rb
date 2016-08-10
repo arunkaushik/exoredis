@@ -14,11 +14,11 @@ require './sorted_set_test'
 UnknownCommand.new().perform
 WrongNumberOfArguments.new().perform
 IllegalResp.new().perform
+FlushallTest.new().perform
 SetTest.new().perform
 GetTest.new().perform
 DelTest.new().perform
 BufferSize.new().perform
 PingTest.new().perform
-FlushallTest.new().perform
 BitmapTest.new().perform
 SortedsetTest.new().perform

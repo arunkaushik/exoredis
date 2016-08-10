@@ -20,6 +20,9 @@ int main(){
 }
 
 int spinServer(){
+    printf("%s\n", "Loading DB from file...");
+    loadFromDB();
+    printf("%s\n", "Server is ready and accepting connections on port 15000.");
     run();
     return 0;
 }
@@ -79,7 +82,7 @@ void do_accept(evutil_socket_t listener, short event, void *arg){
 
 void readcb(struct bufferevent *bev, void *ctx){
     unsigned long bytesread, buffSize = 100000;
-    linkedList* tokens = NULL;
+    argList* tokens = NULL;
     exoVal *result;
     char buf[buffSize];
     struct evbuffer *input, *output;
@@ -197,16 +200,24 @@ Finds the command fired in the command hash_table.
 If found, task is dispatched to the found command else
 returns COMMAND NOT FOUND err
 */
-exoVal* commandDispatcher(linkedList* tokens){
+exoVal* commandDispatcher(argList* tokens){
     exoString* cmd_str = tokens->head->key;
+    exoVal *result = NULL;
     exoVal* node = get(COMMANDS, upCase(cmd_str));
     exoCmd* cmd;
     if(node){
         cmd = (exoCmd*)node->val_obj;
-        return executeCommand(cmd, tokens);
+        result = executeCommand(cmd, tokens);
     } else {
-        return returnError(COMMAND_NOT_FOUND);
+        result = returnError(COMMAND_NOT_FOUND);
     }
+
+    if(!node || cmd->free_args){
+        freeAllArgs(tokens);
+    } else {
+        freeDeadArgs(tokens);
+    }
+    return result;
 }
 
 /*
@@ -214,7 +225,7 @@ Checks if the passed args are compliant to the end API.
 If compliant, it sends of the args to the function pointer
 store in the exoCmd struct. Else it retrun WRONG_NUMBER_OF_ARGUMENTS err
 */
-exoVal* executeCommand(exoCmd* cmd, linkedList* tokens){
+exoVal* executeCommand(exoCmd* cmd, argList* tokens){
     if(cmd->skip_arg_test || \
         validArgs(cmd->args_count, tokens->size -1, cmd->variable_arg_count)){
         return cmd->f_ptr(tokens);
@@ -273,3 +284,27 @@ void actionBeforeExit(){
     freeHashTable(HASH_TABLE);
     return;
 }
+
+/*
+Function called by spinServer() to load data from rdb file if exists.
+*/
+void loadFromDB(){
+    FILE *fp;
+    char *line = NULL;
+    size_t len = 0;
+    unsigned long read;
+    argList *tokens = NULL;
+
+    fp = fopen("data.rdb", "r");
+    if (fp){
+        while ((read = getline(&line, &len, fp)) != -1) {
+            tokens = fileLineTokenizer(line, read - 1);
+            commandDispatcher(tokens);
+        }
+        fclose(fp);
+        if (line){
+            free(line);
+        }
+    }
+}
+

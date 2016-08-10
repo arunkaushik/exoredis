@@ -12,12 +12,11 @@ It is a fast and efficient parser due to RESP.
 It returns NULL which is treated an an ERR message if the passed
 string is illegal according to RESP
 */
-
-linkedList* bufferTokenizer(char *str, unsigned long len){
+argList* bufferTokenizer(char *str, unsigned long len){
     // empty string case, return NULL
     if(len < 1) return NULL;
 
-    linkedList* tokens = NULL;
+    argList* tokens = NULL;
     if(*str == '*'){
         // If it starts with a * it must be a RESP string (from redis client)
         printf(MAG "-------------------------- RESP TOKENIZER BEGINS ----------------------\n" RESET);
@@ -32,10 +31,10 @@ linkedList* bufferTokenizer(char *str, unsigned long len){
     return tokens;
 }
 
-linkedList* respTokenizer(char *str, unsigned long len){
+argList* respTokenizer(char *str, unsigned long len){
     char* start = str;
-    linkedList *tokens = newLinkedList();
-    listNode* node;
+    argList *tokens = newArgList();
+    argListNode* node;
     unsigned long num, l;
     exoString* tkn;
     // Retrun illegal RESP protocol is first byte != '*'
@@ -84,8 +83,8 @@ linkedList* respTokenizer(char *str, unsigned long len){
             str += 2;
             if(str + l + 1 - start < len){
                 tkn = newString(str, l);
-                node = newNode(tkn, NULL);
-                addNodeToList(tokens, node);
+                node = newArg(tkn);
+                addArgToList(tokens, node);
                 str += l;
             } else {
                 return NULL;
@@ -131,13 +130,13 @@ the token and value as void.
 
 It is a slow parser, since we have to parse the whole string character by character.
 */
-linkedList* simpleTokenizer(char *str, unsigned long len){
+argList* simpleTokenizer(char *str, unsigned long len){
     if(len < 2){
         return NULL;
     }
 
-    linkedList* tokens = newLinkedList();
-    listNode* node;
+    argList* tokens = newArgList();
+    argListNode* node;
     exoString* tkn;
     unsigned long index = 0, token_size = 0;
     char *runner = str;
@@ -157,12 +156,99 @@ linkedList* simpleTokenizer(char *str, unsigned long len){
         //if(index==len)token_size -= 1;
         if(token_size){
             tkn = newString(str, token_size);
-            node = newNode(tkn, NULL);
-            addNodeToList(tokens, node);
+            node = newArg(tkn);
+            addArgToList(tokens, node);
         }
         str = runner;
     }
     return tokens;
+}
+
+
+
+argList* fileLineTokenizer(char *str, unsigned long len){
+    char* start = str;
+    argList *tokens = newArgList();
+    argListNode* node;
+    unsigned long num, l;
+    exoString* tkn;
+    // Retrun illegal RESP protocol is first byte != '*'
+    if(*str != '*'){
+        return NULL;
+    }
+    // get the number of elements in the RESP array
+    str++;
+    num = fileRespInt(str, start, len) + 1;
+
+    // parse num bulk strings in the byte sequence, return illegal at any time
+    // when data type is not bulk string or any un-desired byte
+
+    // loop starts with str @ first byte after *
+    while(str - start < len && num--){
+        char c;
+        c = *str;
+        //printf("%s %c %d %ld\n", "-------> ", c , c, str - start);
+        // move to next \r\n bytes
+        while(str - start < len && *str != ' ') str++;
+        // check next 3 bytes to be legal and then parse the next bulk string
+        if(*str == ' ' && str - start < len){
+            // if not last \r\n, jump 3 bytes
+            if(str + 1 - start < len && *(str+1) == '$'){
+                str += 2;
+            }
+            // if not last \r\n and next byte is not $, its an illegal sequence
+            // return NULL 
+            else if(str + 1 - start < len && *(str+1) != '$'){
+                return NULL;
+            }
+            // it is the last \r\n, break here
+            else {
+                // move str to end of the string
+                str++;
+                //printf("%s  %c %d %ld\n", "BREAKING HERE", c , c, str - start);
+                break;
+            }
+            
+        } else {
+            return NULL;
+        }
+        l = fileRespInt(str, start, len);
+        if(l != -1){
+            while(str - start < len && *str != ' ') str++;
+            str += 1;
+            if(str + l - start < len){
+                tkn = newString(str, l);
+                node = newArg(tkn);
+                addArgToList(tokens, node);
+                str += l;
+            } else {
+                return NULL;
+            }
+        } else {
+            return NULL;
+        }
+        if(*str != ' '){
+            return NULL;
+        } 
+    }
+    if(!num && str - start == len){
+        return tokens;
+    } else {
+        return NULL;
+    }
+}
+
+unsigned long fileRespInt(char *str, char *start, unsigned long len){
+    unsigned long l = 0;
+    while(*str != ' ') {
+        // return -1 if illegal byte in sequence
+        if(str - start >= len || *str < '0' || *str > '9'){
+            return -1;
+        }
+        l = (l*10)+(*str - '0');
+        str++;
+    }
+    return l;
 }
 
 // int main(){

@@ -20,7 +20,7 @@ listNode* newNode(exoString *, exoVal *);
 listNode * addNodeToList(linkedList *, listNode *);
 listNode* removeNodeFromList(linkedList *, listNode *);
 listNode* findNode(linkedList *, exoString *);
-exoVal* replaceNodeValue(listNode *, exoVal *);
+exoVal* replaceNodeValue(listNode *, exoString *, exoVal *);
 void printList(linkedList *);
 void freeListNode(listNode *);
 void freeLinkedList(linkedList*);

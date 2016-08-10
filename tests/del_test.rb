@@ -34,7 +34,7 @@ class DelTest < Base
     (0..NUMBER_OF_TEST_CASES/2).each do |i|
       strs = []
       ans = 0;
-      (0..NUMBER_OF_TEST_CASES/10).each do |l|
+      (0..NUMBER_OF_TEST_CASES/200).each do |l|
         n = rand(0..@rand_get.length-1)
         q = @rand_get[n]
         ans += 1 if answers[q]
