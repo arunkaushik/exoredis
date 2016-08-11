@@ -373,17 +373,17 @@ exoString* doubleToString(long double num){
 /*
 Converts a char string into unsigned long. Return -1 if greater than _max_
 */
-unsigned long stringToLong(char *str){
-    unsigned long l = 0;
+long long stringToLongLong(char *str){
+    long long l = 0;
     while(*str != '\0') {
         // return -1 if illegal number or > then OFFSET_MAX
-        if(*str < '0' || *str > '9' || l > OFFSET_MAX){
+        if(*str < '0' || *str > '9' || l > LL_MAX){
             return -1;
         }
         l = (l*10)+(*str - '0');
         str++;
     }
-    return l > OFFSET_MAX ? -1 : l;
+    return l > LL_MAX ? -1 : l;
 }
 
 /*

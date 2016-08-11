@@ -158,11 +158,11 @@ Entry point of GETBIT api.
 exoVal* getbitCommand(argList* args){
     bitmapNode* node;
     bool result;
-    unsigned long pos;
+    long long pos;
     printf(CYN "getbitCommand Called\n" RESET);
     argListNode* arg = args->head->next;
-    pos = stringToLong(arg->next->key->buf);
-    if(pos == -1){
+    pos = stringToLongLong(arg->next->key->buf);
+    if(pos == -1 || pos > OFFSET_MAX){
         return returnError(OFFSET_NOT_INT_OR_OUT_OF_RANGE);
     }
 
@@ -186,13 +186,13 @@ Entry point of SETBIT api.
 exoVal* setbitCommand(argList* args){
     bitmapNode* node;
     bool result;
-    unsigned long pos;
+    long long pos;
     int bit;
     argListNode* arg = args->head->next;
     printf(CYN "setbitCommand Called\n" RESET);
 
-    pos = stringToLong(arg->next->key->buf);
-    if(pos == -1){
+    pos = stringToLongLong(arg->next->key->buf);
+    if(pos == -1 || pos > OFFSET_MAX){
         setAllDead(args);
         return returnError(OFFSET_NOT_INT_OR_OUT_OF_RANGE);
     }
@@ -439,7 +439,7 @@ int parseRange(argListNode* args, long long *left, long long *right, bool *withs
             minus = true;
             str++;
         }
-        num = stringToLong(str);
+        num = stringToLongLong(str);
         if(num == -1){
             return -1; //-ERR value is not an integer or out of range
         } else {

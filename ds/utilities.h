@@ -57,7 +57,7 @@ void freeExoVal(exoVal*);
 exoString* upCase(exoString*);
 void strUpCase(char *);
 exoString* numberToString(unsigned long);
-unsigned long stringToLong(char *);
+long long stringToLongLong(char *);
 int stringToBit(exoString *);
 exoVal* returnError(int);
 exoVal* returnNull();
