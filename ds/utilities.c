@@ -253,15 +253,6 @@ void freeExoString(exoString* str){
 }
 
 /*
-Frees memory holded by bitmapnode object
-*/
-void freebitmapNode(bitmapNode* node){
-    if(node == NULL) return;
-    free(node->mem);
-    free(node);
-}
-
-/*
 Function takes in a parameter code and return corresponding err exoString.
 It is one place to get result string for errored out cases.
 */

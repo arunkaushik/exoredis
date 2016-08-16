@@ -21,11 +21,6 @@ typedef struct exoVal{
     void *val_obj;
 }exoVal;
 
-typedef struct bitmapNode{
-    void *mem;
-    unsigned long len;
-}bitmapNode;
-
 typedef struct argListNode{
     exoString *key;
     bool dead;
@@ -63,7 +58,6 @@ exoVal* returnError(int);
 exoVal* returnNull();
 exoVal* returnOK();
 exoVal* returnPong();
-void freebitmapNode(bitmapNode*);
 long double stringTolongDouble(char *);
 exoString* doubleToString(long double);
 

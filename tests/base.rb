@@ -2,7 +2,7 @@ require 'socket'
 
 class Base
 
-  NUMBER_OF_TEST_CASES = 2000
+  NUMBER_OF_TEST_CASES = 500
   PORT = 15000
   URL = "localhost"
   attr_accessor :conn, :queries, :answers
