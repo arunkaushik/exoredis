@@ -131,10 +131,6 @@ the token and value as void.
 It is a slow parser, since we have to parse the whole string character by character.
 */
 argList* simpleTokenizer(char *str, unsigned long len){
-    if(len < 2){
-        return NULL;
-    }
-
     argList* tokens = newArgList();
     argListNode* node;
     exoString* tkn;

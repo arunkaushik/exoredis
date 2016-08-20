@@ -449,6 +449,7 @@ garbageList* newGarbageList(){
     garbageList* gl = (garbageList*)malloc(sizeof(garbageList));
     if(gl){
         gl->head = NULL;
+        gl->tail = NULL;
     }
     return gl;
 }

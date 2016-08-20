@@ -7,7 +7,7 @@ server: server/redisserver.c \
 		ds/linkedlist.c \
 		ds/utilities.c
         
-		gcc -o  redis_server \
+		gcc -o  exoredis \
 			ds/utilities.c \
 			ds/linkedlist.c \
 			ds/hashtable.c \

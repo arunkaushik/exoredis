@@ -1,5 +1,5 @@
 # Ignore binary file
-redis_server
+exoredis
 a.out
 */*.out
 backup.c

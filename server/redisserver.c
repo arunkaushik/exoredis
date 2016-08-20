@@ -99,13 +99,15 @@ void readcb(struct bufferevent *bev, void *ctx){
     tokens = bufferTokenizer(buf, bytesread);
 
     if(tokens){
-        result = commandDispatcher(tokens);
+        if( tokens->size ){
+            result = commandDispatcher(tokens);
+            writeToBuffer(result, output);
+        }
+
     } else {
         result = returnError(PROTOCOL_ERROR);
+        writeToBuffer(result, output);
     }
-    
-    writeToBuffer(result, output);
-
     freeGarbage();
     // Have to free tokens THINK ABOUT IT    
 
