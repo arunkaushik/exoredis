@@ -366,13 +366,17 @@ exoVal* zrangeCommand(argList* args){
 /*
 Entry point of SAVE api.
 */
-exoVal* saveCommand(){
+exoVal* saveCommand(char *file_path){
     linkedList* list = NULL;
     listNode *node = NULL;
     char buffer[800000];
     int i;
     FILE *pFile;
-    pFile = fopen("data.rdb", "w+");
+    pFile = fopen(file_path, "w+");
+    if(pFile == NULL){
+        perror("File error");
+        return returnNull();
+    }
 
     for(i = 0; i < HASH_TABLE->size; i++){
         list = HASH_TABLE->buckets[i];
@@ -397,8 +401,8 @@ exoVal* saveCommand(){
     return returnOK();
 }
 
-exoVal* loadCommand(){
-    if(loadFromDB() != 0){
+exoVal* loadCommand(char *file_path){
+    if(loadFromDB(file_path) != 0){
         return returnNull();
     } else {
         return returnOK();
@@ -583,7 +587,7 @@ void writeSkiplistToFile(listNode *node, FILE *pFile, char *buffer){
     }
 }
 
-int loadFromDB(){
+int loadFromDB(char *file_path){
     FILE *fp;
     exoString *key, *tmp;
     exoVal *val;
@@ -595,7 +599,7 @@ int loadFromDB(){
     long double score;
     argList *tokens = NULL;
 
-    fp = fopen("data.rdb", "r");
+    fp = fopen(file_path, "r");
     if (fp){
         while(fread(&code, sizeof(unsigned long), 1, fp)){
             switch(code){

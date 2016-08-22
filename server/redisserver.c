@@ -1,7 +1,26 @@
 #include "redisserver.h"
 
-int main(){
+int main(int argc, char *argv[]){
  // binding save method on exit signal
+    FILE *fp;
+    if(argc == 1){
+        DB_FILE_PATH = DEFAULT_FILE_PATH;
+        printf("%s %s\n", "No file path provided, using default: ", DB_FILE_PATH );
+    } else if(argc == 2){
+        DB_FILE_PATH = argv[1];
+        if(access(DB_FILE_PATH, W_OK) == 0){
+            printf("%s %s\n", "DB will be save to file at: ", DB_FILE_PATH );
+            fclose(fp);
+        } else {
+            DB_FILE_PATH = DEFAULT_FILE_PATH;
+            printf("%s %s\n", "File path not writable. DB will be save to file at: ", DB_FILE_PATH );
+        }
+        
+    } else {
+        printf("%s\n", "Too many arguments." );
+        return EXIT_FAILURE;
+    }
+
     signal(SIGINT, sig_handler);
 
     COMMANDS = initializeCmdTable();
@@ -24,7 +43,7 @@ int main(){
 
 int spinServer(){
     printf("%s\n", "Loading DB from file...");
-    int load = loadFromDB();
+    int load = loadFromDB(DB_FILE_PATH);
     if(load != -1){
         printf("%s\n", "DB load Successfull. Server is ready and accepting connections on port 15000.");
     } else {
@@ -220,6 +239,16 @@ If compliant, it sends of the args to the function pointer
 store in the exoCmd struct. Else it retrun WRONG_NUMBER_OF_ARGUMENTS err
 */
 exoVal* executeCommand(exoCmd* cmd, argList* tokens){
+    if(strcmp(cmd->cmd_str, "SAVE") == 0 ){
+        return saveCommand(DB_FILE_PATH);
+    } else if(strcmp(cmd->cmd_str, "LOADDB") == 0){
+        if(loadFromDB(DB_FILE_PATH) != -1){
+            return returnOK();
+        } else {
+            return returnNull();
+        }
+    }
+
     if(cmd->skip_arg_test || \
         validArgs(cmd->args_count, tokens->size -1, cmd->variable_arg_count)){
         return cmd->f_ptr(tokens);
@@ -274,6 +303,7 @@ It frees all the memory used by server after writing the rdb file.
 */
 void actionBeforeExit(){
     printf("%s\n","I will do some work before exit.");
+    saveCommand(DB_FILE_PATH);
     freeHashTable(COMMANDS);
     freeHashTable(HASH_TABLE);
     freeGarbage();

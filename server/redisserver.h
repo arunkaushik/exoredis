@@ -32,3 +32,5 @@ void freeGarbage();
 
 int ConnectFD;
 int SocketFD;
+char* DEFAULT_FILE_PATH = "./data.rdb";
+char* DB_FILE_PATH;

@@ -27,8 +27,8 @@ void parseSwitches(argList*, bool *, bool *, bool *, bool *);
 exoVal* zcardCommand(argList*);
 exoVal* zcountCommand(argList*);
 exoVal* zrangeCommand(argList*);
-exoVal* saveCommand();
-exoVal* loadCommand();
+exoVal* saveCommand(char *);
+exoVal* loadCommand(char *);
 bool parseMinMax(argListNode*, long double *, long double *);
 int parseRange(argListNode*, long long *, long long *, bool*);
 
