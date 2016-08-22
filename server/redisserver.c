@@ -8,7 +8,7 @@ int main(int argc, char *argv[]){
         printf("%s %s\n", "No file path provided, using default: ", DB_FILE_PATH );
     } else if(argc == 2){
         DB_FILE_PATH = argv[1];
-        if(access(DB_FILE_PATH, W_OK) == 0){
+        if(access(DB_FILE_PATH, W_OK) == 0 || fopen(DB_FILE_PATH, "w+")){
             printf("%s %s\n", "DB will be save to file at: ", DB_FILE_PATH );
             fclose(fp);
         } else {

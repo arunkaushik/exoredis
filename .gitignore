@@ -3,4 +3,4 @@ exoredis
 a.out
 */*.out
 backup.c
-data.rdb
+*.rdb
