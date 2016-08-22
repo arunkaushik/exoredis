@@ -57,7 +57,7 @@ adds a command in the command hash_table. Utility function used by initializeCmd
 */
 exoCmd* addCommand(hashTable *ht, exoCmd* cmd){
     unsigned long l = strlen(cmd->cmd_str);
-    size_t key_hash = stringHash(cmd->cmd_str);
+    size_t key_hash = stringHash(cmd->cmd_str, l);
 
     exoString* cmd_str = newString(cmd->cmd_str, l);
     exoVal* exo_cmd = newExoVal(EXOCMD, cmd);

@@ -221,14 +221,33 @@ void printString(exoString* str){
 /*
 Hash function used to calculate hash for strings
 */
-size_t stringHash(char *str){
+size_t stringHash(char *string, unsigned long len){
     unsigned long hash = 5381;
     int c, l = HASH_LEN;
-
+    size_t pos;
+    char *str = string;
     while (*str != '\0' && l-- > 0){
         c = *str++;
         hash = ((hash << 5) + hash) + c;
     }
+
+    l = MIN(len, HASH_LEN);
+    str = string;
+    str += l - 1;
+    while (l-- >= 0){
+        c = *str--;
+        hash = ((hash << 5) + hash) + c;
+    }
+
+    l = HASH_LEN;
+    c = *string;
+    while(l--){
+        pos = c - 'A';
+        pos %= len;
+        c = string[pos];
+        hash = ((hash << 5) + hash) + c;
+    }
+
     printf("%s %s %zu\n", YEL "string hash calculated for str: " RESET, str, hash % INITIAL_SIZE);
     return hash % INITIAL_SIZE;
 }

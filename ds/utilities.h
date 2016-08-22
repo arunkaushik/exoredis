@@ -46,7 +46,7 @@ typedef struct garbageList{
 exoString* newString(void *, unsigned long);
 exoVal* newExoVal(size_t, void *);
 void printString(exoString*);
-size_t stringHash(char *);
+size_t stringHash(char *, unsigned long);
 void freeExoString(exoString*);
 void freeExoVal(exoVal*);
 exoString* upCase(exoString*);

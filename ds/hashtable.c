@@ -22,7 +22,7 @@ gets a value from given hash_table with specific key
 */
 exoVal* get(hashTable* ht, exoString* key){
     printf(RED "get Called\n" RESET);
-    size_t str_hash = stringHash(key->buf);
+    size_t str_hash = stringHash(key->buf, key->len);
     listNode *node = findNode(ht->buckets[str_hash], key);
     return node ? node->value : NULL;
 }
@@ -32,7 +32,7 @@ sets a value in given hash_table with specified key, val pair
 */
 exoVal* set(hashTable* ht, exoString* key, exoVal* val){
     printf(RED "set Called\n" RESET);
-    size_t str_hash = stringHash(key->buf);
+    size_t str_hash = stringHash(key->buf, key->len);
     listNode* node = findNode(ht->buckets[str_hash], key);
     if(node){
         return replaceNodeValue(node, key, val);
@@ -52,7 +52,7 @@ It does not check for ds_type, simple remove the entry from table
 */
 size_t del(hashTable* ht, exoString* key){
     printf(RED "del Called\n" RESET);
-    size_t str_hash = stringHash(key->buf);
+    size_t str_hash = stringHash(key->buf, key->len);
     listNode* node = findNode(ht->buckets[str_hash], key);
     if(node){
         removeNodeFromList(ht->buckets[str_hash], node);
