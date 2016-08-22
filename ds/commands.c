@@ -230,6 +230,9 @@ Checks of arguments by itself
 */
 exoVal* zaddCommand(argList* args){
     printf(CYN "zaddCommand Called\n" RESET);
+    if(args->size < 4){
+        return returnError(WRONG_NUMBER_OF_ARGUMENTS);
+    }
     bool xx = false, nx = false, ch = false, incr = false;
     argListNode* arg = args->head->next;
     exoVal* ret = NULL;
