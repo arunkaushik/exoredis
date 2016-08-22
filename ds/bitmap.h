@@ -19,6 +19,7 @@ bool setbitUtility(void* , unsigned long);
 bool clearbitUtility(void* , unsigned long);
 bool getbitUtility(void* , unsigned long);
 void freebitmapNode(bitmapNode*);
+int loadBitmap(exoString *, void *, unsigned long);
 inline unsigned long word_offset(unsigned long);
 inline size_t bit_offset(unsigned long);
 

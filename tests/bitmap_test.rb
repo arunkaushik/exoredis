@@ -6,7 +6,7 @@ class BitmapTest < Base
     super
     @answers = {}
     @key_pool = []
-    (1..10).each do |i|
+    (1..2).each do |i|
       str = random_string
       @key_pool << str
       @answers[str] = {}

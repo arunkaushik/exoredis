@@ -24,8 +24,12 @@ int main(){
 
 int spinServer(){
     printf("%s\n", "Loading DB from file...");
-    loadFromDB();
-    printf("%s\n", "Server is ready and accepting connections on port 15000.");
+    int load = loadFromDB();
+    if(load != -1){
+        printf("%s\n", "DB load Successfull. Server is ready and accepting connections on port 15000.");
+    } else {
+        printf("%s\n", "DB load Failed. Server is ready and accepting connections on port 15000.");
+    }
     run();
     return 0;
 }
@@ -109,23 +113,6 @@ void readcb(struct bufferevent *bev, void *ctx){
         writeToBuffer(result, output);
     }
     freeGarbage();
-    // Have to free tokens THINK ABOUT IT    
-
-    // ****** BELOW CODE IS FOR HANDLEING BUFFER LIMITATIONS
-    // ************** HAVE TO LOOK INTO IT *****************
-
-    // if (evbuffer_get_length(input) >= MAX_LINE) {
-    //     /* Too long; just process what there is and go on so that the buffer
-    //      * doesn't grow infinitely long. */
-    //     char buf[1024];
-    //     while (evbuffer_get_length(input)) {
-    //         int n = evbuffer_remove(input, buf, sizeof(buf));
-    //         for (i = 0; i < n; ++i)
-    //             buf[i] = rot13_char(buf[i]);
-    //         evbuffer_add(output, buf, n);
-    //     }
-    //     evbuffer_add(output, "\n", 1);
-    // }
 }
 
 void writeToBuffer(exoVal *result, struct evbuffer *output){
@@ -319,27 +306,3 @@ void freeGarbage(){
     }
     GARBAGE_LIST->head = GARBAGE_LIST->tail = NULL;
 }
-
-/*
-Function called by spinServer() to load data from rdb file if exists.
-*/
-void loadFromDB(){
-    FILE *fp;
-    char *line = NULL;
-    size_t len = 0;
-    unsigned long read;
-    argList *tokens = NULL;
-
-    fp = fopen("data.rdb", "r");
-    if (fp){
-        while ((read = getline(&line, &len, fp)) != -1) {
-            tokens = fileLineTokenizer(line, read - 1);
-            commandDispatcher(tokens);
-        }
-        fclose(fp);
-        if (line){
-            free(line);
-        }
-    }
-}
-

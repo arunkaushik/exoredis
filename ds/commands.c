@@ -14,6 +14,7 @@ array of exoCmds. exoCmd is the data_type that holds all the information
 of the APIs exposed to clients, like GET, SET, etc. 
 It also folds the function pointers to which command execution shall be dispatched
 */
+// cmd_str, ds_type, args_count, variable_arg_count, skip_arg_test, free_args, f_ptr
 struct exoCmd commandTable[] = {
   {"GET", BULKSTRING, 1, false, false, true, getCommand},
   {"SET", BULKSTRING, 2, true, false, false, setCommand},
@@ -26,7 +27,8 @@ struct exoCmd commandTable[] = {
   {"ZCARD", SORTED_SET, 1, false, false, true, zcardCommand},
   {"ZCOUNT", SORTED_SET, 3, false, false, true, zcountCommand},
   {"ZRANGE", SORTED_SET, 3, false, true, true, zrangeCommand},
-  {"SAVE", BULKSTRING, 0, false, false, true, saveCommand}
+  {"SAVE", BULKSTRING, 0, false, false, true, saveCommand},
+  {"LOADDB", SIMPLE_STRING, 0, false, false, true, loadCommand}
 };
 
 /*
@@ -230,7 +232,7 @@ exoVal* zaddCommand(argList* args){
     printf(CYN "zaddCommand Called\n" RESET);
     bool xx = false, nx = false, ch = false, incr = false;
     argListNode* arg = args->head->next;
-    exoVal* ret;
+    exoVal* ret = NULL;
     exoVal* val = get(HASH_TABLE, arg->key);
     skipList *sk_list = NULL;
     if(val){
@@ -379,7 +381,7 @@ exoVal* saveCommand(){
                 writeHashMapToFile(node, pFile, buffer);
                 break;
             case BITMAP:
-                //writeHBitMapToFile(node, pFile, buffer);
+                writeHBitMapToFile(node, pFile, buffer);
                 break;
             case SORTED_SET:
                 writeSkiplistToFile(node, pFile, buffer);
@@ -390,6 +392,14 @@ exoVal* saveCommand(){
     }
     fclose(pFile);
     return returnOK();
+}
+
+exoVal* loadCommand(){
+    if(loadFromDB() != 0){
+        return returnNull();
+    } else {
+        return returnOK();
+    }
 }
 
 /* ------------------ utilitiy functions begin here ------------------ */
@@ -496,70 +506,46 @@ bool parseMinMax(argListNode* args, long double *left, long double *right){
     return true;
 }
 
-/*
-Utility function used by SAVE api
-*/
 void writeHashMapToFile(listNode *node, FILE *pFile, char *buffer){
     exoString *tmp;
-    char *runner = buffer;
-    memcpy(runner, "*3 $3 set ", strlen("*3 $3 set "));
-    runner += strlen("*3 $3 set ");
+
+    // data type
+    unsigned long code = BULKSTRING;
+    fwrite(&code, sizeof(unsigned long), 1, pFile);
 
     // key
     tmp = node->key;
-    runner = lineBufferToResp(tmp, runner);
+    fwrite(&(tmp->len), sizeof(unsigned long), 1, pFile);
+    fwrite(tmp->buf, sizeof(char), tmp->len, pFile);
 
     // value
     tmp = (exoString*)node->value->val_obj;
-    runner = lineBufferToResp(tmp, runner);
+    fwrite(&(tmp->len), sizeof(unsigned long), 1, pFile);
+    fwrite(tmp->buf, sizeof(char), tmp->len, pFile);
 
-    *runner = '\0';
-
-    fprintf(pFile, "%s\n", buffer);
 }
 
 void writeHBitMapToFile(listNode *node, FILE *pFile, char *buffer){
     exoString *tmp;
-    bitmapNode* bm_node = (bitmapNode*)node->value->val_obj;
-    unsigned long num_of_bytes = bm_node->len * 8;
-    unsigned long batch = 700000, w, i;
-    void *word = bm_node->mem;
-    char *runner;
+    bitmapNode *bm_node;
 
-    while(num_of_bytes > 0){
-        runner = buffer;
-        memcpy(runner, "*3 $10 loadbitmap ", strlen("*3 $10 loadbitmap "));
-        runner += strlen("*3 $10 loadbitmap ");
+    // data type
+    unsigned long code = BITMAP;
+    fwrite(&code, sizeof(unsigned long), 1, pFile);
 
-        // key
-        tmp = node->key;
-        runner = lineBufferToResp(tmp, runner);
+    // key
+    tmp = node->key;
+    fwrite(&(tmp->len), sizeof(unsigned long), 1, pFile);
+    fwrite(tmp->buf, sizeof(char), tmp->len, pFile);
 
-        // number of words
-        w = MIN(num_of_bytes, batch);
-
-        tmp = numberToString(w);
-        runner = lineBufferToResp(tmp, runner);
-
-        memcpy(runner, word, w);
-        runner += w;
-        *runner = ' ';
-        runner++;
-        *runner = '\n';
-        runner++;
-        //fprintf(pFile, "%s ", buffer);
-        fwrite(buffer, runner - buffer + 1, 1, pFile);
-        //fwrite(word, w, 1, pFile);
-
-        //fprintf(pFile, "%s\n", " ");
-        num_of_bytes -= w;
-        word += w;
-    }
+    // memory
+    bm_node = (bitmapNode*)node->value->val_obj;
+    fwrite(&(bm_node->len), sizeof(unsigned long), 1, pFile);
+    fwrite(bm_node->mem, sizeof(word_t), bm_node->len, pFile);
 }
 
 void writeSkiplistToFile(listNode *node, FILE *pFile, char *buffer){
     exoString *tmp;
-    char *runner = buffer;
     skipList *sk_list;
     skipListNode *sk_node;
     sk_list = (skipList*)node->value->val_obj;
@@ -570,44 +556,164 @@ void writeSkiplistToFile(listNode *node, FILE *pFile, char *buffer){
     sk_node = sk_node->next;
 
     while(sk_node){
-        char *runner = buffer;
-        memcpy(runner, "*4 $4 zadd ", strlen("*4 $4 zadd "));
-        runner += strlen("*4 $4 zadd ");
-        //key
+        // data type
+        unsigned long code = SORTED_SET;
+        fwrite(&code, sizeof(unsigned long), 1, pFile);
+
+        // key
         tmp = node->key;
-        runner = lineBufferToResp(tmp, runner);
+        fwrite(&(tmp->len), sizeof(unsigned long), 1, pFile);
+        fwrite(tmp->buf, sizeof(char), tmp->len, pFile);
 
         // score
         tmp = doubleToString(sk_node->score);
-        runner = lineBufferToResp(tmp, runner);
+        fwrite(&(tmp->len), sizeof(unsigned long), 1, pFile);
+        fwrite(tmp->buf, sizeof(char), tmp->len, pFile);
+
 
         // member
         tmp = sk_node->key;
-        runner = lineBufferToResp(tmp, runner);
-
-        *runner = '\0';
-        fprintf(pFile, "%s\n", buffer);
+        fwrite(&(tmp->len), sizeof(unsigned long), 1, pFile);
+        fwrite(tmp->buf, sizeof(char), tmp->len, pFile);
 
         sk_node = sk_node->next;
     }
 }
 
+int loadFromDB(){
+    FILE *fp;
+    exoString *key, *tmp;
+    exoVal *val;
+    // allocalte 520mb for buffer
+    void *buffer = malloc(sizeof(char) * 1024 * 1024 * 520);
 
-char* lineBufferToResp(exoString *str, char *runner){
-    exoString *tmp;
-    tmp = numberToString(str->len);
-    *runner = '$';
-    runner++;
-    memcpy(runner, tmp->buf, tmp->len);
-    runner += tmp->len;
-    *runner = ' ';
-    runner++;
+    unsigned long len = 0;
+    unsigned long code;
+    long double score;
+    argList *tokens = NULL;
+
+    fp = fopen("data.rdb", "r");
+    if (fp){
+        while(fread(&code, sizeof(unsigned long), 1, fp)){
+            switch(code){
+                case BULKSTRING:
+                    if(loadHashMapEntry(fp, buffer) == -1)
+                        return -1;
+                    break;
+
+                case SORTED_SET:
+                    if(loadSkiplistEntry(fp, buffer) == -1)
+                        return -1;
+                    break;
+
+                case BITMAP:
+                    if(loadBitmapEntry(fp, buffer) == -1)
+                        return -1;
+                    break;
+            }
+        }
+    }
+    free(buffer);
+    return 0;
+}
+
+int loadHashMapEntry(FILE *fp, void *buffer){
+    argList *tokens = newArgList();
+    exoVal *res;
+    int ret;
+    unsigned long len;
+    exoString *str;
+    argListNode *arg;
+
+    str = newString("SET", 3);
+    arg = newArg(str);
+    addArgToList(tokens, arg);
 
     //key
-    tmp = str;
-    memcpy(runner, tmp->buf, tmp->len);
-    runner += tmp->len;
-    *runner = ' ';
-    runner++;
-    return runner;
+    fread(&len, sizeof(unsigned long), 1, fp);
+    fread(buffer, sizeof(char), len, fp);
+    str = newString(buffer, len);
+    arg = newArg(str);
+    addArgToList(tokens, arg);
+
+    //value
+    fread(&len, sizeof(unsigned long), 1, fp);
+    fread(buffer, sizeof(char), len, fp);
+    str = newString(buffer, len);
+    arg = newArg(str);
+    addArgToList(tokens, arg);
+
+    res = setCommand(tokens);
+    freeDeadArgs(tokens);
+    if(res){
+      str = (exoString*)res->val_obj;
+      ret = strcmp("+OK", str->buf) == 0 ?  0 :  -1;  
+    } else {
+        ret = -1;
+    }
+    if(ret == -1)
+        printf("%s\n", "hashmap me fat gaya");
+    return ret;
+}
+
+int loadSkiplistEntry(FILE *fp, void *buffer){
+    argList *tokens = newArgList();
+    unsigned long len;
+    int ret;
+    exoString *str;
+    exoVal *res = NULL;
+    argListNode *arg;
+
+    str = newString("ZADD", 4);
+    arg = newArg(str);
+    addArgToList(tokens, arg);
+
+    // key
+    fread(&len, sizeof(unsigned long), 1, fp);
+    fread(buffer, sizeof(char), len, fp);
+    str = newString(buffer, len);
+    arg = newArg(str);
+    addArgToList(tokens, arg);
+
+    // score
+    fread(&len, sizeof(unsigned long), 1, fp);
+    fread(buffer, sizeof(char), len, fp);
+    str = newString(buffer, len);
+    arg = newArg(str);
+    addArgToList(tokens, arg);
+
+    //member
+    fread(&len, sizeof(unsigned long), 1, fp);
+    fread(buffer, sizeof(char), len, fp);
+    str = newString(buffer, len);
+    arg = newArg(str);
+    addArgToList(tokens, arg);
+
+    res = zaddCommand(tokens);
+    freeDeadArgs(tokens);
+    if(res){
+      str = (exoString*)res->val_obj;
+      ret = strcmp("1", str->buf) == 0 ? 0 : -1;  
+    } else {
+        ret = -1;
+    }
+    if(ret == -1)
+        printf("%s\n", "skiplist me fat gaya");
+    return ret;
+}
+
+int loadBitmapEntry(FILE *fp, void *buffer){
+    unsigned long len;
+    exoString *key;
+
+    //key
+    fread(&len, sizeof(unsigned long), 1, fp);
+    fread(buffer, sizeof(char), len, fp);
+    key = newString(buffer, len);
+
+    //memory
+    fread(&len, sizeof(unsigned long), 1, fp);
+    fread(buffer, sizeof(word_t), len, fp);
+
+    return loadBitmap(key, buffer, len);
 }

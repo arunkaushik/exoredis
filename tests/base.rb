@@ -52,11 +52,27 @@ class Base
   end
 
   def random_string len = 50
-    (0...rand(1..len)).map { ('a'..'z').to_a[rand(26)] }.join
+    (0...rand(10..len)).map { ('a'..'z').to_a[rand(26)] }.join
   end
 
   def flushdb
     query = "*1\r\n$8\r\nflushall\r\n"
+    expected = "+OK\r\n"
+    send_message query
+    msg = get_message
+    assert(msg, expected, query)
+  end
+
+  def loaddb
+    query = "*1\r\n$6\r\nloaddb\r\n"
+    expected = "+OK\r\n"
+    send_message query
+    msg = get_message
+    assert(msg, expected, query)
+  end
+
+  def savedb
+    query = "*1\r\n$4\r\nsave\r\n"
     expected = "+OK\r\n"
     send_message query
     msg = get_message

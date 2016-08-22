@@ -10,6 +10,7 @@ require './ping_test'
 require './flushall_test'
 require './bitmap_test'
 require './sorted_set_test'
+require './save_test'
 
 UnknownCommand.new().perform
 WrongNumberOfArguments.new().perform
@@ -22,3 +23,4 @@ BufferSize.new().perform
 PingTest.new().perform
 BitmapTest.new().perform
 SortedsetTest.new().perform
+SaveTest.new().perform

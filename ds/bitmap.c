@@ -73,6 +73,30 @@ bool setBit(bitmapNode* node, long long pos, bool bit){
     return ret;
 }
 
+int loadBitmap(exoString *key, void *source, unsigned long len){
+    bitmapNode *node = newBitmapNode();
+    exoVal *val = NULL, *res;
+    exoString *str;
+    int ret = 0;
+    if(node){
+        node->len = len;
+        node->mem = malloc(sizeof(word_t) * len);
+        if(node->mem){
+            memcpy(node->mem, source, sizeof(word_t) * len);
+            val = newExoVal(BITMAP, node);
+            if(!set(HASH_TABLE, key, val)){
+                ret = -1;
+            }
+        } else {
+            free(node);
+            ret = -1;
+        }
+    } else {
+        ret = -1;
+    }
+    return ret;
+}
+
 /*
 utility funtion used to set bit
 */

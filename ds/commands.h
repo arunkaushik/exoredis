@@ -28,11 +28,17 @@ exoVal* zcardCommand(argList*);
 exoVal* zcountCommand(argList*);
 exoVal* zrangeCommand(argList*);
 exoVal* saveCommand();
+exoVal* loadCommand();
 bool parseMinMax(argListNode*, long double *, long double *);
 int parseRange(argListNode*, long long *, long long *, bool*);
+
 void writeHashMapToFile(listNode *, FILE *, char *);
 void writeSkiplistToFile(listNode *, FILE *, char *);
 void writeHBitMapToFile(listNode *, FILE *, char *);
-char* lineBufferToResp(exoString *, char *);
+
+int loadFromDB();
+int loadHashMapEntry(FILE *, void *);
+int loadSkiplistEntry(FILE *, void *);
+int loadBitmapEntry();
 
 #endif

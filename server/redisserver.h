@@ -11,8 +11,7 @@
 #include <assert.h>
 #include <unistd.h>
 #include <errno.h>
-#include "../protocol/resp.h"
-//#include "../tcpsocket/soket.h"
+#include "protocol.h"
 
 #define MAX_LINE 100000
 
@@ -29,7 +28,6 @@ void writeToBuffer(exoVal *, struct evbuffer *);
 void writeRespArrayToBuffer(exoVal *, struct evbuffer *);
 void run();
 int spinServer();
-void loadFromDB();
 void freeGarbage();
 
 int ConnectFD;
