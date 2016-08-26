@@ -1,7 +1,11 @@
 #include "redisserver.h"
 
 int main(int argc, char *argv[]){
- // binding save method on exit signal
+
+    /* If a command line argument is given (file path to write db), it is 
+    * first checked if the given file is writable or not. If no file path is given
+    * OR file path given is not writable, default file path is choosen to store
+    * the rdb file. Default file path is `./data.rdb` */
     FILE *fp;
     if(argc == 1){
         DB_FILE_PATH = DEFAULT_FILE_PATH;
@@ -21,12 +25,20 @@ int main(int argc, char *argv[]){
         return EXIT_FAILURE;
     }
 
-    signal(SIGINT, sig_handler);
+    // binding save method on exit signal
+    signal(SIGINT, sigHandler);
 
+    /* All exoredis commands sits in a hash table, which will be queried for
+    *  in-coming client queries */
     COMMANDS = initializeCmdTable();
 
+    /* Master hash table where are key-value pairs are stored. Value can be
+    * any exoredis object like BULKSTRING, SORTED_SET etc */
     HASH_TABLE = newHashTable(INITIAL_SIZE);
 
+    /* Stores the reference of any object that has to be trashed and its memory
+    * has to be freed. Idea to to send response to client as soon as possible
+    * and do any cleanups after sending the response */
     GARBAGE_LIST = newGarbageList();
 
     if(COMMANDS && HASH_TABLE && GARBAGE_LIST){
@@ -80,14 +92,14 @@ void run(){
         return;
     }
 
-    listener_event = event_new(base, listener, EV_READ|EV_PERSIST, do_accept, (void*)base);
+    listener_event = event_new(base, listener, EV_READ|EV_PERSIST, doAccept, (void*)base);
     /*XXX check it */
     event_add(listener_event, NULL);
 
     event_base_dispatch(base);
 }
 
-void do_accept(evutil_socket_t listener, short event, void *arg){
+void doAccept(evutil_socket_t listener, short event, void *arg){
     struct event_base *base = arg;
     struct sockaddr_storage ss;
     socklen_t slen = sizeof(ss);
@@ -100,25 +112,19 @@ void do_accept(evutil_socket_t listener, short event, void *arg){
         struct bufferevent *bev;
         evutil_make_socket_nonblocking(fd);
         bev = bufferevent_socket_new(base, fd, BEV_OPT_CLOSE_ON_FREE);
-        bufferevent_setcb(bev, readcb, NULL, errorcb, NULL);
+        bufferevent_setcb(bev, readCallback, NULL, errorCallback, NULL);
         bufferevent_setwatermark(bev, EV_READ, 0, MAX_LINE);
         bufferevent_enable(bev, EV_READ|EV_WRITE);
     }
 }
 
-void readcb(struct bufferevent *bev, void *ctx){
+void readCallback(struct bufferevent *bev, void *ctx){
     char tmp[10000];
     int n;
     unsigned long bytesread;
     argList* tokens = NULL;
     exoVal *result;
 
-    /*
-    * currently putting a cap on input buffer to be max upto 1mb
-    * This is a good candidate for configurable options. If input
-    * byte stream received from client is > 1mb, it will be dropped 
-    * and an error message will be returned.
-    */
     char *buf = (char*)malloc((sizeof(char) * INPUT_BUFFER_SIZE ) + 10);
     char *runner = buf;
     struct evbuffer *input, *output;
@@ -233,16 +239,16 @@ void writeRespArrayToBuffer(exoVal *result, struct evbuffer *output){
     return;
 }
 
-void errorcb(struct bufferevent *bev, short error, void *ctx){
+void errorCallback(struct bufferevent *bev, short error, void *ctx){
     if (error & BEV_EVENT_EOF) {
         /* connection has been closed, do any clean up here */
-        /* ... */
+        /* TODO */
     } else if (error & BEV_EVENT_ERROR) {
         /* check errno to see what error occurred */
-        /* ... */
+        /* TODO */
     } else if (error & BEV_EVENT_TIMEOUT) {
         /* must be a timeout event handle, handle it */
-        /* ... */
+        /* TODO */
     }
     bufferevent_free(bev);
 }
@@ -298,8 +304,10 @@ exoVal* executeCommand(exoCmd* cmd, argList* tokens){
 }
 
 /*
-Utility function used by executeCommand
-***** HAVE TO MODIFY FOR ZADD.... think about minimum args and then dynamic arg nature
+* Utility function used by executeCommand. If command has a fixed argument structure
+* then its argument count is checked here, else if the command has dynamic argument
+* structure, then its the responsibility of command it self to check for arguments count
+* and return proper error in case of illegal arguments been passed
 */
 bool validArgs(size_t arg_count, unsigned long args_passed, bool variable_args){
     printf("%s %zu %lu\n", WHT "validArgs called with: " RESET, arg_count, args_passed);
@@ -312,9 +320,9 @@ bool validArgs(size_t arg_count, unsigned long args_passed, bool variable_args){
 }
 
 /*
-Function binded to inturrupt signal. It is excuted when user hits ctrl+C
+* Function binded to inturrupt signal. It is excuted when user hits ctrl+C
 */
-void sig_handler(int signo) {
+void sigHandler(int signo) {
     if(signo == SIGINT){
         printf("received SIGINT\n");
         if(-1 == shutdownServer()){
@@ -328,26 +336,33 @@ void sig_handler(int signo) {
 }
 
 /*
-It shuts down the server after writing all the stored data in rdb file for persistence.
+* It shuts down the server after writing all the stored data in rdb file for persistence.
 */
 int shutdownServer(){
     printf("%s\n","Shutting Down server...");
-    // here we have to free any TCP port that we are holding << 1500 >>
+    // Do any tcp related cleanup here.
     return 0;
 }
 
 /*
-Function called by shutdownServer() for persistence.
-It frees all the memory used by server after writing the rdb file. 
+* Function called by shutdownServer() for persistence.
+* It frees all the memory used by server after writing the rdb file. 
 */
 void actionBeforeExit(){
+    // save current state to rdb file
     saveCommand(DB_FILE_PATH);
+
+    // free all occipied memory
     freeHashTable(COMMANDS);
     freeHashTable(HASH_TABLE);
     freeGarbage();
     return;
 }
 
+/*
+* Utility function used to free memory occupied by various different
+* exoredis objects
+*/
 void freeGarbage(){
     garbageNode *node = GARBAGE_LIST->head;
     garbageNode *tmp;

@@ -19,12 +19,12 @@
 exoVal* commandDispatcher(argList*);
 exoVal* executeCommand(exoCmd*, argList*);
 bool validArgs(size_t, unsigned long, bool);
-void sig_handler(int);
+void sigHandler(int);
 int shutdownServer();
 void actionBeforeExit();
-void readcb(struct bufferevent *, void *);
-void errorcb(struct bufferevent *, short, void *);
-void do_accept(evutil_socket_t , short, void *);
+void readCallback(struct bufferevent *, void *);
+void errorCallback(struct bufferevent *, short, void *);
+void doAccept(evutil_socket_t , short, void *);
 void writeToBuffer(exoVal *, struct evbuffer *);
 void writeRespArrayToBuffer(exoVal *, struct evbuffer *);
 void run();

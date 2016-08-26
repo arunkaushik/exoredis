@@ -10,7 +10,7 @@
 #define SKIPLIST_MAX_LEVEL 16
 #define LL_MAX 9223372036854775806
 
-#define HASH_LEN 4
+#define HASH_LEN 10
 
 #define SIMPLE_STRING 0
 #define RESP_ERROR 1
