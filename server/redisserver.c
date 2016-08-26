@@ -43,12 +43,12 @@ int main(int argc, char *argv[]){
 
 int spinServer(){
     printf("%s\n", "Loading DB from file...");
-    int load = loadFromDB(DB_FILE_PATH);
-    if(load != -1){
-        printf("%s\n", "DB load Successfull. Server is ready and accepting connections on port 15000.");
+    if(loadFromDB(DB_FILE_PATH) != -1){
+        printf("%s\n", "DB load Successfull.");
     } else {
-        printf("%s\n", "DB load Failed. Server is ready and accepting connections on port 15000.");
+        printf("%s\n", "DB load Failed.");
     }
+    printf("%s\n", "Server is ready and accepting connections on port 15000.");
     run();
     return 0;
 }
@@ -107,31 +107,70 @@ void do_accept(evutil_socket_t listener, short event, void *arg){
 }
 
 void readcb(struct bufferevent *bev, void *ctx){
-    unsigned long bytesread, buffSize = 100000;
+    char tmp[10000];
+    int n;
+    unsigned long bytesread;
     argList* tokens = NULL;
     exoVal *result;
-    char buf[buffSize];
-    struct evbuffer *input, *output;
-    input = bufferevent_get_input(bev);
-    output = bufferevent_get_output(bev);
 
-    // assuming bytesread < buffSize
+    /*
+    * currently putting a cap on input buffer to be max upto 1mb
+    * This is a good candidate for configurable options. If input
+    * byte stream received from client is > 1mb, it will be dropped 
+    * and an error message will be returned.
+    */
+    char *buf = (char*)malloc((sizeof(char) * INPUT_BUFFER_SIZE ) + 10);
+    char *runner = buf;
+    struct evbuffer *input, *output;
+    output = bufferevent_get_output(bev);
+    input = bufferevent_get_input(bev);
+
     bytesread = evbuffer_get_length(input);
     evbuffer_remove(input, buf, bytesread);
+    runner += bytesread;
+    /*
+    * bufferevent_get_input API of libevent reads only first 4096 bytes form the socket buffer
+    * per read callback. Below code reads rest of the bytes from the socket buffer and appends
+    * it to our input buffer. Annoying hard coded limit of 4096 found can be found
+    * at https://github.com/libevent/libevent/blob/master/buffer.c#L2198
 
-    tokens = bufferTokenizer(buf, bytesread);
+    * HACK begins
+    * get the file discriptior on which this instance of read callback is triggered.
+    * We have to possibly read more data from the fd buffer if available
+    */
+    evutil_socket_t fd = bufferevent_getfd(bev);
+    while(1){
+        n = recv(fd, tmp, sizeof(tmp), 0);
+        if (n <= 0){
+            break;
+        }
+        memcpy(runner, tmp, n);
+        runner += n;
+        bytesread += n;
+    }
+    /*
+    * HACK ends
+    */
+
+    /*
+    * Currently putting a cap on max byte stream accepted from client at 1mb. If byte
+    * stream received from client is > 1mb, protocol error will be returned
+    */
+    if(bytesread < INPUT_BUFFER_SIZE){
+        tokens = bufferTokenizer(buf, bytesread);
+    }
 
     if(tokens){
         if( tokens->size ){
             result = commandDispatcher(tokens);
             writeToBuffer(result, output);
         }
-
     } else {
         result = returnError(PROTOCOL_ERROR);
         writeToBuffer(result, output);
     }
     freeGarbage();
+    free(buf);
 }
 
 void writeToBuffer(exoVal *result, struct evbuffer *output){
@@ -162,7 +201,7 @@ void writeToBuffer(exoVal *result, struct evbuffer *output){
         num_str = numberToString(str->len);
         evbuffer_add(output, num_str->buf, num_str->len);
         evbuffer_add(output, "\r\n", 2);
-        evbuffer_add(output, str->buf, str->len); 
+        evbuffer_add(output, str->buf, str->len);
         evbuffer_add(output, "\r\n", 2);
         return;
 
@@ -292,7 +331,7 @@ void sig_handler(int signo) {
 It shuts down the server after writing all the stored data in rdb file for persistence.
 */
 int shutdownServer(){
-    printf(" %s\n","Shutting Down server...");
+    printf("%s\n","Shutting Down server...");
     // here we have to free any TCP port that we are holding << 1500 >>
     return 0;
 }
@@ -302,7 +341,6 @@ Function called by shutdownServer() for persistence.
 It frees all the memory used by server after writing the rdb file. 
 */
 void actionBeforeExit(){
-    printf("%s\n","I will do some work before exit.");
     saveCommand(DB_FILE_PATH);
     freeHashTable(COMMANDS);
     freeHashTable(HASH_TABLE);

@@ -13,7 +13,8 @@
 #include <errno.h>
 #include "protocol.h"
 
-#define MAX_LINE 100000
+#define INPUT_BUFFER_SIZE 1024 * 1024
+#define MAX_LINE 1024 * 1024
 
 exoVal* commandDispatcher(argList*);
 exoVal* executeCommand(exoCmd*, argList*);
