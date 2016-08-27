@@ -71,6 +71,17 @@ class SortedsetTest < Base
         msg = get_message
         assert(msg, expected, q)
       end
+
+      (0..10).each do |i|
+        min = "-inf"
+        max = "+inf"
+        q = "*4\r\n$6\r\nzcount\r\n$#{set.length}\r\n#{set}\r\n$#{min.to_s.length}\r\n#{min.to_s}\r\n$#{max.to_s.length}\r\n#{max.to_s}\r\n"
+        res = answers[set].values.length
+        expected = ":#{res.to_s}\r\n"
+        send_message q
+        msg = get_message
+        assert(msg, expected, q)
+      end
     end
   end
 

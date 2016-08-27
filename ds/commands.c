@@ -497,6 +497,9 @@ bool parseMinMax(argListNode* args, long double *left, long double *right){
             minus = true;
             str++;
         }
+        if(*str == '+'){
+            str++;
+        }
         score = stringTolongDouble(str);
         if(score == -1){
             return false;

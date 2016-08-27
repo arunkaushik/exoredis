@@ -415,6 +415,14 @@ int stringToBit(exoString *str){
 Convers a char string into long double. Return -1 if illegal
 */
 long double stringTolongDouble(char *str){
+    size_t l = strlen(str);
+    char tmp[l+1];
+    strcpy(tmp, str);
+    strUpCase(tmp);
+    if(strcmp(tmp, "INF") == 0){
+        return LDBL_MAX;
+    }
+
     long double res;
     long double frac = 0.0;
     int num = 0, fraction = 0, frac_len = 1;
