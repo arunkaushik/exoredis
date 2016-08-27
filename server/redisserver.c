@@ -172,7 +172,7 @@ void readCallback(struct bufferevent *bev, void *ctx){
             writeToBuffer(result, output);
         }
     } else {
-        result = returnError(PROTOCOL_ERROR);
+        result = _Error(PROTOCOL_ERROR);
         writeToBuffer(result, output);
     }
     freeGarbage();
@@ -267,7 +267,7 @@ exoVal* commandDispatcher(argList* tokens){
         cmd = (exoCmd*)node->val_obj;
         result = executeCommand(cmd, tokens);
     } else {
-        result = returnError(COMMAND_NOT_FOUND);
+        result = _Error(COMMAND_NOT_FOUND);
     }
 
     if(!node || cmd->free_args || result->ds_type == RESP_ERROR){
@@ -288,9 +288,9 @@ exoVal* executeCommand(exoCmd* cmd, argList* tokens){
         return saveCommand(DB_FILE_PATH);
     } else if(strcmp(cmd->cmd_str, "LOADDB") == 0){
         if(loadFromDB(DB_FILE_PATH) != -1){
-            return returnOK();
+            return _OK();
         } else {
-            return returnNull();
+            return _Null();
         }
     }
 
@@ -298,9 +298,9 @@ exoVal* executeCommand(exoCmd* cmd, argList* tokens){
         validArgs(cmd->args_count, tokens->size -1, cmd->variable_arg_count)){
         return cmd->f_ptr(tokens);
     } else {
-        return returnError(WRONG_NUMBER_OF_ARGUMENTS);
+        return _Error(WRONG_NUMBER_OF_ARGUMENTS);
     }
-    return returnNull();
+    return _Null();
 }
 
 /*
@@ -339,7 +339,7 @@ void sigHandler(int signo) {
 * It shuts down the server after writing all the stored data in rdb file for persistence.
 */
 int shutdownServer(){
-    printf("%s\n","Shutting Down server...");
+    printf("%s\n","User requested shutdown. Shutting Down server...");
     // Do any tcp related cleanup here.
     return 0;
 }

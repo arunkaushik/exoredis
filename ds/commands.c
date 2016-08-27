@@ -84,9 +84,9 @@ exoVal* getCommand(argList* args){
     if(val && val->ds_type == BULKSTRING){
         return val;
     } else if(val && val->ds_type != BULKSTRING) {
-        return returnError(WRONG_TYPE_OF_COMMAND_ON_TARGET_OBJECT);
+        return _Error(WRONG_TYPE_OF_COMMAND_ON_TARGET_OBJECT);
     } else {
-        return returnNull();
+        return _Null();
     }
 }
 
@@ -105,11 +105,11 @@ exoVal* setCommand(argList* args){
         val = newExoVal(BULKSTRING, node->next->key);
         val = set(HASH_TABLE, key, val);
         if(!val){
-            return returnNull();
+            return _Null();
         }
         node = node->next->next;
     }
-    return returnOK();
+    return _OK();
 }
 
 /*
@@ -123,7 +123,7 @@ exoVal* delCommand(argList* args){
     // head holds command node, actual args starts from head->next
     argListNode* node = args->head->next;
     if(args->size < 2){
-        return returnError(WRONG_NUMBER_OF_ARGUMENTS);
+        return _Error(WRONG_NUMBER_OF_ARGUMENTS);
     } else {
         while(node){
             count += del(HASH_TABLE, node->key);
@@ -137,7 +137,7 @@ exoVal* delCommand(argList* args){
 Entry point of PING api.
 */
 exoVal* pingCommand(argList* args){
-    return returnPong();
+    return _Pong();
 }
 
 /*
@@ -148,9 +148,9 @@ exoVal* flushCommand(argList* args){
     if(new_table){
         freeHashTable(HASH_TABLE);
         HASH_TABLE = new_table;
-        return returnOK();
+        return _OK();
     } else {
-        return returnError(FAILED_TO_FLUSH_DB);
+        return _Error(FAILED_TO_FLUSH_DB);
     } 
 }
 
@@ -165,7 +165,7 @@ exoVal* getbitCommand(argList* args){
     argListNode* arg = args->head->next;
     pos = stringToLongLong(arg->next->key->buf);
     if(pos == -1 || pos > OFFSET_MAX){
-        return returnError(OFFSET_NOT_INT_OR_OUT_OF_RANGE);
+        return _Error(OFFSET_NOT_INT_OR_OUT_OF_RANGE);
     }
 
     exoVal* val = get(HASH_TABLE, arg->key);
@@ -174,7 +174,7 @@ exoVal* getbitCommand(argList* args){
             node = (bitmapNode*)val->val_obj;
             result = getBit(node, pos);                
         } else {
-            return returnError(WRONG_TYPE_OF_COMMAND_ON_TARGET_OBJECT);
+            return _Error(WRONG_TYPE_OF_COMMAND_ON_TARGET_OBJECT);
         }
     } else {     
         result = false;
@@ -196,12 +196,12 @@ exoVal* setbitCommand(argList* args){
     pos = stringToLongLong(arg->next->key->buf);
     if(pos == -1 || pos > OFFSET_MAX){
         setAllDead(args);
-        return returnError(OFFSET_NOT_INT_OR_OUT_OF_RANGE);
+        return _Error(OFFSET_NOT_INT_OR_OUT_OF_RANGE);
     }
     bit = stringToBit(arg->next->next->key);
     if(bit == -1){
         setAllDead(args);
-        return returnError(BIT_NOT_INT_OR_OUT_OF_RANGE);
+        return _Error(BIT_NOT_INT_OR_OUT_OF_RANGE);
     }
 
     exoVal* val = get(HASH_TABLE, arg->key);
@@ -212,7 +212,7 @@ exoVal* setbitCommand(argList* args){
             node = (bitmapNode*)val->val_obj;
             result = setBit(node, pos, bit);
         } else {
-            return returnError(WRONG_TYPE_OF_COMMAND_ON_TARGET_OBJECT);
+            return _Error(WRONG_TYPE_OF_COMMAND_ON_TARGET_OBJECT);
         }
     } else {
             args->head->dead = args->head->next->next->dead = args->head->next->next->next->dead = true;
@@ -231,7 +231,7 @@ Checks of arguments by itself
 exoVal* zaddCommand(argList* args){
     printf(CYN "zaddCommand Called\n" RESET);
     if(args->size < 4){
-        return returnError(WRONG_NUMBER_OF_ARGUMENTS);
+        return _Error(WRONG_NUMBER_OF_ARGUMENTS);
     }
     bool xx = false, nx = false, ch = false, incr = false;
     argListNode* arg = args->head->next;
@@ -243,7 +243,7 @@ exoVal* zaddCommand(argList* args){
             sk_list = (skipList*)val->val_obj;
         } else {
             setAllDead(args);
-            return returnError(WRONG_TYPE_OF_COMMAND_ON_TARGET_OBJECT);
+            return _Error(WRONG_TYPE_OF_COMMAND_ON_TARGET_OBJECT);
         }
     } else {
         sk_list = newSkipList();
@@ -273,7 +273,7 @@ exoVal* zcardCommand(argList* args){
             sk_list = (skipList*)val->val_obj;
             res = sk_list->size;
         } else {
-            return returnError(WRONG_TYPE_OF_COMMAND_ON_TARGET_OBJECT);
+            return _Error(WRONG_TYPE_OF_COMMAND_ON_TARGET_OBJECT);
         }
     } else {
         res = 0;
@@ -301,10 +301,10 @@ exoVal* zcountCommand(argList* args){
                 ma = rankByScore(sk_list, right, true);
                 res = mi > ma ? 0 : ma - mi;
             } else {
-                return returnError(MIN_OR_MAX_IS_NOT_A_FLOAT);
+                return _Error(MIN_OR_MAX_IS_NOT_A_FLOAT);
             }
         } else {
-            return returnError(WRONG_TYPE_OF_COMMAND_ON_TARGET_OBJECT);
+            return _Error(WRONG_TYPE_OF_COMMAND_ON_TARGET_OBJECT);
         }
     } else {
         res = 0;
@@ -317,7 +317,7 @@ Entry point of ZRANGE api.
 */
 exoVal* zrangeCommand(argList* args){
     if(args->size -1 != 3 && args->size -1 != 4){
-        return returnError(WRONG_NUMBER_OF_ARGUMENTS);
+        return _Error(WRONG_NUMBER_OF_ARGUMENTS);
     }
     printf(CYN "zrangeCommand Called\n" RESET);
     linkedList* result = newLinkedList();
@@ -330,9 +330,9 @@ exoVal* zrangeCommand(argList* args){
     // return error if illegal arguments, else execute command
     valid_args = parseRange(arg->next, &left, &right, &withscore);
     if(valid_args == -1) {
-        return returnError(VALUE_IS_NOT_AN_INTEGER_OR_OUT_OF_RANGE);
+        return _Error(VALUE_IS_NOT_AN_INTEGER_OR_OUT_OF_RANGE);
     } else if(valid_args == -2) {
-        return returnError(SYNTAX_ERROR);
+        return _Error(SYNTAX_ERROR);
     }
 
     exoVal* val = get(HASH_TABLE, arg->key);
@@ -348,7 +348,7 @@ exoVal* zrangeCommand(argList* args){
             len = MAX(right - left + 1, 0);
             sk_node = len > 0 ? rankByOrder(sk_list, left) : NULL;
         } else {
-            return returnError(WRONG_TYPE_OF_COMMAND_ON_TARGET_OBJECT);
+            return _Error(WRONG_TYPE_OF_COMMAND_ON_TARGET_OBJECT);
         }
     } else {
         sk_node = NULL;
@@ -367,6 +367,7 @@ exoVal* zrangeCommand(argList* args){
 Entry point of SAVE api.
 */
 exoVal* saveCommand(char *file_path){
+    printf("%s\n", "Saving final state of DB on disk.");
     linkedList* list = NULL;
     listNode *node = NULL;
     char buffer[800000];
@@ -375,7 +376,8 @@ exoVal* saveCommand(char *file_path){
     pFile = fopen(file_path, "w+");
     if(pFile == NULL){
         perror("File error");
-        return returnNull();
+        perror("Failed to save DB on disk");
+        return _Null();
     }
 
     for(i = 0; i < HASH_TABLE->size; i++){
@@ -398,14 +400,15 @@ exoVal* saveCommand(char *file_path){
         }
     }
     fclose(pFile);
-    return returnOK();
+    printf("%s\n", "DB saved on disk");
+    return _OK();
 }
 
 exoVal* loadCommand(char *file_path){
     if(loadFromDB(file_path) != 0){
-        return returnNull();
+        return _Null();
     } else {
-        return returnOK();
+        return _OK();
     }
 }
 

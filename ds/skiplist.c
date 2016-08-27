@@ -40,7 +40,7 @@ exoVal* addToSortedSet(skipList* list, bool xx, bool nx, bool ch, bool incr, arg
     printf(RED "addToSortedSet Called\n" RESET);
     if(nx && xx){
         setAllDead(args);
-        return returnError(XX_AND_NX_OPTIONS_AT_THE_SAME_TIME_ARE_NOT_COMPATIBLE);
+        return _Error(XX_AND_NX_OPTIONS_AT_THE_SAME_TIME_ARE_NOT_COMPATIBLE);
     }
     size_t switches = 0, headers, move;
     argListNode* arg = args->head;
@@ -58,14 +58,14 @@ exoVal* addToSortedSet(skipList* list, bool xx, bool nx, bool ch, bool incr, arg
                 return scoreIncrement(list, arg, nx);
             } else {
                 setAllDead(args);
-                return returnError(INCR_OPTION_SUPPORTS_A_SINGLE_INCREMENT_ELEMENT_PAIR);
+                return _Error(INCR_OPTION_SUPPORTS_A_SINGLE_INCREMENT_ELEMENT_PAIR);
             }
         } else {
             return addOrUpdateMember(list, xx, nx, ch, arg, args->size - switches - 2);
         }
     } else {
         setAllDead(args);
-        return returnError(SYNTAX_ERROR);
+        return _Error(SYNTAX_ERROR);
     }
 }
 
@@ -113,7 +113,7 @@ exoVal* addOrUpdateMember(skipList* list, bool xx, bool nx, bool ch, argListNode
             }
         }
     } else {
-        return returnError(VALUE_IS_NOT_A_VALID_FLOAT);
+        return _Error(VALUE_IS_NOT_A_VALID_FLOAT);
     }
     
     res = ch ? changed : new_insert;
@@ -137,7 +137,7 @@ exoVal* scoreIncrement(skipList* list, argListNode* args, bool nx){
             if(nx){
                 // setting score and member as dead to free memory
                 args->dead = args->next->dead = true;
-                return returnNull();
+                return _Null();
             } else {
                 target = (skipListNode*)tmp->val_obj;
                 res += target->score;
@@ -148,7 +148,7 @@ exoVal* scoreIncrement(skipList* list, argListNode* args, bool nx){
         addNodeToSkiplist(list, members[0], res);
         return newExoVal(BULKSTRING, doubleToString(res));
     } else {
-        return returnError(VALUE_IS_NOT_A_VALID_FLOAT);
+        return _Error(VALUE_IS_NOT_A_VALID_FLOAT);
     }
 }
 

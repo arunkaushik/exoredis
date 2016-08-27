@@ -86,18 +86,16 @@ it makes length operation O(1)
 */
 exoString* newString(void *source, unsigned long len){
     exoString *str = (exoString*)malloc(sizeof (exoString)+ len + 1);
-    if(!str){
-        return str;
-    } else {
+    if(str){
         str->len = len;
         if (len) {
             memcpy(str->buf, source, len);
         }
         // every exoString terminates with \0 character
         str->buf[len] = '\0';
-        printf("%s %s %lu\n", YEL "new exoString created: " RESET, str->buf, str->len);
-        return str; 
-    } 
+        printf("%s %s %lu\n", YEL "new exoString created: " RESET, str->buf, str->len); 
+    }
+    return str;
 }
 
 /*
@@ -275,8 +273,8 @@ void freeExoString(exoString* str){
 Function takes in a parameter code and return corresponding err exoString.
 It is one place to get result string for errored out cases.
 */
-exoVal* returnError(int code){
-    printf("%s %d\n", YEL "returnError Called with code: " RESET, code );
+exoVal* _Error(int code){
+    printf("%s %d\n", YEL "_Error Called with code: " RESET, code );
     switch(code){
     case COMMAND_NOT_FOUND:
         return newExoVal(RESP_ERROR, &RET_COMMAND_NOT_FOUND);
@@ -307,27 +305,27 @@ exoVal* returnError(int code){
     case VALUE_IS_NOT_AN_INTEGER_OR_OUT_OF_RANGE:
         return newExoVal(RESP_ERROR, &RET_VALUE_IS_NOT_AN_INTEGER_OR_OUT_OF_RANGE);
     }
-    return returnNull();
+    return _Null();
 }
 
 /*
 Cases where exoRedis has to return null
 */
-exoVal* returnNull(){
+exoVal* _Null(){
     return newExoVal(SIMPLE_STRING, &RET_NULL);
 }
 
 /*
 Cases where exoredis has to return +OK
 */
-exoVal* returnOK(){
+exoVal* _OK(){
     return newExoVal(SIMPLE_STRING, &RET_OK);
 }
 
 /*
 Cases where exoredis has to return +PONG
 */
-exoVal* returnPong(){
+exoVal* _Pong(){
     return newExoVal(SIMPLE_STRING, &PONG);
 }
 

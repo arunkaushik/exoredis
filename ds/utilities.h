@@ -54,10 +54,10 @@ void strUpCase(char *);
 exoString* numberToString(unsigned long);
 long long stringToLongLong(char *);
 int stringToBit(exoString *);
-exoVal* returnError(int);
-exoVal* returnNull();
-exoVal* returnOK();
-exoVal* returnPong();
+exoVal* _Error(int);
+exoVal* _Null();
+exoVal* _OK();
+exoVal* _Pong();
 long double stringTolongDouble(char *);
 exoString* doubleToString(long double);
 
