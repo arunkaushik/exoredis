@@ -137,7 +137,7 @@ void readCallback(struct bufferevent *bev, void *ctx){
     /*
     * bufferevent_get_input API of libevent reads only first 4096 bytes form the socket buffer
     * per read callback. Below code reads rest of the bytes from the socket buffer and appends
-    * it to our input buffer. Annoying hard coded limit of 4096 found can be found
+    * it to our input buffer. Annoying hard coded limit of 4096 can be found
     * at https://github.com/libevent/libevent/blob/master/buffer.c#L2198
 
     * HACK begins
@@ -162,7 +162,7 @@ void readCallback(struct bufferevent *bev, void *ctx){
     * Currently putting a cap on max byte stream accepted from client at 1mb. If byte
     * stream received from client is > 1mb, protocol error will be returned
     */
-    if(bytesread < INPUT_BUFFER_SIZE){
+    if(bytesread <= INPUT_BUFFER_SIZE){
         tokens = bufferTokenizer(buf, bytesread);
     }
 

@@ -22,6 +22,8 @@ redis commands.
 3. Run exoredis with file path to rdb file: `$> ./exoredis /path/to/rdb_file/file.rdb`
 OR
 4. Run exoredis without file path: `$> ./exoredis`
+5. Exoredis has a minimal test framework written in ruby. If test machine has ruby installed you
+can run tests: `$> ruby tests/test.rb`
 
 Exoredis expects a single argument, path to the rdb file where it is supposed to dump the DB. 
 If no file path argument is given, it saves the db in current folder in **data.rdb** file.
@@ -57,4 +59,4 @@ S No | Command | Redis(seconds) | Exoredis(seconds)
 1. Decimal precision **Redis: 16** and **Exoredis: 6**
 2. No memory compression in Exoredis, so if you create bitmap with farthest bit( at position 4294967295) being set to 1 it will consume 512mb of memory. It is similar to Redis (refer [SETBIT](http://redis.io/commands/setbit) ). However, Redis compresses the memory while writing the DB on disk, while Exoredis
 does not compress the memory. DB file will consume 512mb space on disk too.
-3. If you find any :neutral_face: please let me know :grin:
+3. If you find any bug :neutral_face: please let me know :grin:
