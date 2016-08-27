@@ -151,6 +151,7 @@ void freeLinkedList(linkedList* list){
         freeListNode(node);
         node = tmp;
     }
+    free(list);
 }
 
 /*

@@ -52,7 +52,6 @@ argList* respTokenizer(char *str, unsigned long len){
     while(str - start < len && num--){
         char c;
         c = *str;
-        //printf("%s %c %d %ld\n", "-------> ", c , c, str - start);
         // move to next \r\n bytes
         while(str - start < len && *str != '\r') str++;
         // check next 3 bytes to be legal and then parse the next bulk string
@@ -70,7 +69,6 @@ argList* respTokenizer(char *str, unsigned long len){
             else {
                 // move str to end of the string
                 str++;
-                //printf("%s  %c %d %ld\n", "BREAKING HERE", c , c, str - start);
                 break;
             }
             
@@ -120,13 +118,13 @@ unsigned long getRespInt(char *str, char *start, unsigned long len){
 
 /*
 It is a string parser which implements a certain protocol to create meaning
-out of the string passed. It is used for Commands read from telnet or any other 
-client which does not talks in RESP.
+out of the sequence of bytes passed. It is used for Commands read from telnet or any other 
+client which does not talk in RESP.
 
 It assumes the white space character as the delimiter.
 
-returns a linked list of tokens. Tokens are simply listnode with key as
-the token and value as void.
+returns a arg list (variant of linked list) of tokens. Tokens are simply argnode with key as
+the token containing string.
 
 It is a slow parser, since we have to parse the whole string character by character.
 */
@@ -149,7 +147,6 @@ argList* simpleTokenizer(char *str, unsigned long len){
             token_size++;
             index++;
         }
-        //if(index==len)token_size -= 1;
         if(token_size){
             tkn = newString(str, token_size);
             node = newArg(tkn);

@@ -42,7 +42,7 @@ is not supported by exoRedis
 hashTable* initializeCmdTable(){
     printf(CYN "initialized COMMANDS\n" RESET);
     hashTable* commands = newHashTable(INITIAL_SIZE);
-    int i,n = sizeof(commandTable)/sizeof(struct exoCmd);
+    int i, n = sizeof(commandTable)/sizeof(struct exoCmd);
     for (i = 0; i < n; i++) {
         exoCmd *c = commandTable+i;
         if(addCommand(commands, c) == NULL){
@@ -519,6 +519,9 @@ bool parseMinMax(argListNode* args, long double *left, long double *right){
     return true;
 }
 
+
+/* ------------------ functions for DB persistence begin here ------------------ */
+
 void writeHashMapToFile(listNode *node, FILE *pFile, char *buffer){
     exoString *tmp;
 
@@ -664,8 +667,6 @@ int loadHashMapEntry(FILE *fp, void *buffer){
     } else {
         ret = -1;
     }
-    if(ret == -1)
-        printf("%s\n", "hashmap me fat gaya");
     return ret;
 }
 
@@ -710,8 +711,6 @@ int loadSkiplistEntry(FILE *fp, void *buffer){
     } else {
         ret = -1;
     }
-    if(ret == -1)
-        printf("%s\n", "skiplist me fat gaya");
     return ret;
 }
 

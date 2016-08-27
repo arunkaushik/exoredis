@@ -85,7 +85,7 @@ exoString is a data_type to store string and its length
 it makes length operation O(1)
 */
 exoString* newString(void *source, unsigned long len){
-    exoString *str = (exoString*)malloc(sizeof (exoString)+ len + 1);
+    exoString *str = (exoString*)malloc(sizeof (exoString) + len + 1);
     if(str){
         str->len = len;
         if (len) {
@@ -105,14 +105,12 @@ Based on ds_type, we can type case actual object
 */
 exoVal* newExoVal(size_t ds_type, void *obj){
     exoVal *val = (exoVal*)malloc(sizeof (exoVal));
-    if(!val){
-        return val;
-    } else {
+    if(val){
         val->ds_type = ds_type;
         val->val_obj = obj;
-        printf(YEL "new exoVal created\n" RESET);
-        return val; 
+        printf(YEL "new exoVal created\n" RESET); 
     }
+    return val;
 }
 /*
 ArgList is used to create tokens of exostring from input buffer.
@@ -344,8 +342,7 @@ exoString* upCase(exoString* str){
 Utility funtion used by upCase
 */
 void strUpCase(char *str){
-    unsigned long c = 0;
- 
+    unsigned long c = 0; 
     while (str[c] != '\0') {
         if (str[c] >= 'a' && str[c] <= 'z') {
          str[c] = str[c] - 32;

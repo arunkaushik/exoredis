@@ -66,8 +66,6 @@ bool setBit(bitmapNode* node, long long pos, bool bit){
             node->len = len + 1;
             ret = false;
             bit ? setbitUtility(node->mem, pos) : clearbitUtility(node->mem, pos);
-        } else {
-            // have to return err
         }
     }
     return ret;
