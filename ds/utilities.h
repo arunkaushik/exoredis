@@ -1,6 +1,7 @@
 #ifndef EXOSTRING_H_   /* Include guard */
 #define EXOSTRING_H_
 #include <stddef.h>
+#include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
