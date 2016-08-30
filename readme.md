@@ -17,13 +17,29 @@ redis commands.
 
 ## Setup and Run
 
-1. Download the source code and put it into a directory.
-2. Compile source code with make: `$> make`
+### Dependencies
+
+Exoredis uses libevent for asynchronous IO to serve multiple clients together. Follow the following points
+to install libevent on test machine
+
+1. Check if libevent is already installed: `$>whereis libevent`.
+2. If the command prints libevet's path on terminal, it is already installed. If nothing prints out on terminal, follow following steps
+    1. `$> wget https://github.com/libevent/libevent/releases/download/release-2.0.22-stable/libevent-2.0.22-stable.tar.gz`
+
+    2. `$> tar xzf libevent-2.0.22-stable.tar.gz`
+    3. `$> cd libevent-2.0.22-stable`
+    4. `$> ./configure`
+    5. `$> make`
+    6. `$> sudo make install`
+3. Add library path in your ENV variable `$> export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib/;`
+
+### Installation
+1. Download the source code of exoredis from github and put it into a directory.
+2. Compile source code with make: `$> make -B`
 3. Run exoredis with file path to rdb file: `$> ./exoredis /path/to/rdb_file/file.rdb`
 OR
 4. Run exoredis without file path: `$> ./exoredis`
-5. Exoredis has a minimal test framework written in ruby. If test machine has ruby installed you
-can run tests: `$> ruby tests/test.rb`
+5. Exoredis has a minimal test framework written in ruby. If ruby is insatalled on test machine you can run tests as: `$> ruby tests/test.rb`
 
 Exoredis expects a single argument, path to the rdb file where it is supposed to dump the DB. 
 If no file path argument is given, it saves the db in current folder in **data.rdb** file.
