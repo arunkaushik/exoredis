@@ -320,8 +320,8 @@ exoVal* zrangeCommand(argList* args){
         return _Error(WRONG_NUMBER_OF_ARGUMENTS);
     }
     printf(CYN "zrangeCommand Called\n" RESET);
-    linkedList* result = newLinkedList();
-    listNode *tmp;
+    argList* result = newArgList();
+    argListNode *tmp;
     argListNode* arg = args->head->next;
     bool withscore = false;
     int valid_args;
@@ -354,9 +354,11 @@ exoVal* zrangeCommand(argList* args){
         sk_node = NULL;
     }
     while(sk_node && len--){
-        tmp = addNodeToList(result, newNode(sk_node->key, NULL));
+        tmp = addArgToList(result, newArg(sk_node->key));
         if(withscore){
-            addNodeToList(result, newNode(doubleToString(sk_node->score), NULL));
+            tmp = newArg(doubleToString(sk_node->score));
+            tmp->dead = true;
+            addArgToList(result, tmp);
         }
         sk_node = sk_node->next;
     }

@@ -218,8 +218,8 @@ void writeToBuffer(exoVal *result, struct evbuffer *output){
 }
 
 void writeRespArrayToBuffer(exoVal *result, struct evbuffer *output){
-    linkedList *list = (linkedList*)result->val_obj;
-    listNode *node = list->head;
+    argList *list = (argList*)result->val_obj;
+    argListNode *node = list->head;
     exoString *tmp;
     tmp = numberToString(list->size);
     evbuffer_add(output, "*", 1);
@@ -234,8 +234,7 @@ void writeRespArrayToBuffer(exoVal *result, struct evbuffer *output){
         evbuffer_add(output, "\r\n", 2);
         node = node->next;
     }
-    // Have to think about it
-    //freeLinkedList(list);
+    freeDeadArgs(list);
     return;
 }
 
