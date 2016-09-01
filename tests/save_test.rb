@@ -52,7 +52,7 @@ class SaveTest < Base
 
   def set
     @hashmap.each do |key, val|
-      q = "*3\r\n$3\r\nset\r\n$#{key.length}\r\n#{key}\r\n$#{val.length}\r\n#{val}\r\n"
+      q = query_string(["set", key, val])
       expected = "+OK\r\n"
       send_message q
       msg = get_message
@@ -60,7 +60,7 @@ class SaveTest < Base
     end
 
     # save a key to expire early
-    q = "*5\r\n$3\r\nset\r\n$11\r\nspecial_key\r\n$3\r\nbar\r\n$2\r\npx\r\n$4\r\n1000\r\n"
+    q = query_string(["set", "special_key", "bar", "px", 1000])
     expected = "+OK\r\n"
     send_message q
     msg = get_message
@@ -72,7 +72,7 @@ class SaveTest < Base
       n = rand(0..@hashmap.keys.length-1)
       q = @hashmap.keys[n]
       ans = @hashmap[q]
-      query = "*2\r\n$3\r\nget\r\n$#{q.length}\r\n#{q}\r\n"
+      query = query_string(["get", q])
       expected = "$#{ans.length}\r\n#{ans}\r\n"
       send_message query
       msg = get_message
@@ -80,7 +80,7 @@ class SaveTest < Base
     end
 
     print("Checking expired key")
-    q = "*2\r\n$3\r\nget\r\n$11\r\nspecial_key\r\n"
+    q =  query_string(["get", "special_key"])
     expected = "$-1\r\n"
     send_message q
     msg = get_message
@@ -90,7 +90,7 @@ class SaveTest < Base
   def zadd
     answers.each do|set, data|
       data.each do |key, score|
-        q = "*4\r\n$4\r\nzadd\r\n$#{set.length}\r\n#{set}\r\n$#{score.to_s.length}\r\n#{score.to_s}\r\n$#{key.length}\r\n#{key}\r\n"
+        q = query_string(["zadd", set, score, key])
         expected = ":1\r\n"
         send_message q
         msg = get_message
@@ -101,7 +101,7 @@ class SaveTest < Base
 
   def zcard
     answers.each do |set, data|
-      q = "*2\r\n$5\r\nzcard\r\n$#{set.length}\r\n#{set}\r\n" 
+      q = query_string(["zcard", set])
       expected = ":#{data.keys.length}\r\n"
       send_message q
       msg = get_message
@@ -114,7 +114,7 @@ class SaveTest < Base
       (0..NUMBER_OF_TEST_CASES).each do |i|
         min = -1 * rand(1.2...78778.9).round(6)
         max = rand(1.2...7678778.9).round(6)
-        q = "*4\r\n$6\r\nzcount\r\n$#{set.length}\r\n#{set}\r\n$#{min.to_s.length}\r\n#{min.to_s}\r\n$#{max.to_s.length}\r\n#{max.to_s}\r\n"
+        q = query_string(["zcount", set, min, max])
         res = answers[set].values.select{|k| k if k >= min && k <= max}.length
         expected = ":#{res.to_s}\r\n"
         send_message q
@@ -130,7 +130,7 @@ class SaveTest < Base
       str = @key_pool[n]
       pos = rand(0..4294967295)
       bit = rand(0..1)
-      query = "*4\r\n$6\r\nsetbit\r\n$#{str.length}\r\n#{str}\r\n$#{pos.to_s.length}\r\n#{pos}\r\n$1\r\n#{bit}\r\n"
+      query = query_string(["setbit", str, pos, bit])
       ans = @bitmap[str][pos]
       @bitmap[str][pos] = bit
       expected = ":#{ans.to_i}\r\n"
@@ -145,7 +145,7 @@ class SaveTest < Base
       n = rand(1..@key_pool.length-1)
       str = @key_pool[n]
       pos = rand(0..4294967295)
-      query = "*3\r\n$6\r\ngetbit\r\n$#{str.length}\r\n#{str}\r\n$#{pos.to_s.length}\r\n#{pos}\r\n"
+      query = query_string(["getbit", str, pos])
       ans = @bitmap[str][pos]
       expected = ":#{ans.to_i}\r\n"
       send_message query

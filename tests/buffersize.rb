@@ -12,7 +12,7 @@ class BufferSize < Base
       str2 = (0..3500).map { ('a'..'z').to_a[rand(26)] }.join
       answers[str1] = str2
       @rand_get << str1
-      queries << "*3\r\n$3\r\nset\r\n$#{str1.length}\r\n#{str1}\r\n$#{str2.length}\r\n#{str2}\r\n"
+      queries << query_string(["set", str1, str2])
     end
   end
 
@@ -35,7 +35,7 @@ class BufferSize < Base
       n = rand(0..@rand_get.length-1)
       q = @rand_get[n]
       ans = answers[q]
-      query = "*2\r\n$3\r\nget\r\n$#{q.length}\r\n#{q}\r\n"
+      query = query_string(["get", q])
       expected = "$#{ans.length}\r\n#{ans}\r\n"
       send_message query
       msg = get_message

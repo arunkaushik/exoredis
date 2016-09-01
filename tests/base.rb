@@ -55,8 +55,16 @@ class Base
     (0...rand(10..len)).map { ('a'..'z').to_a[rand(26)] }.join
   end
 
+  def query_string items
+    q = "*#{items.size}\r\n"
+    items.each do |i|
+      q = q + "$#{i.to_s.length}\r\n#{i.to_s}\r\n"
+    end
+    q
+  end
+
   def flushdb
-    query = "*1\r\n$8\r\nflushall\r\n"
+    query = query_string(["flushall"])
     expected = "+OK\r\n"
     send_message query
     msg = get_message
@@ -64,7 +72,7 @@ class Base
   end
 
   def loaddb
-    query = "*1\r\n$6\r\nloaddb\r\n"
+    query = query_string(["loaddb"])
     expected = "+OK\r\n"
     send_message query
     msg = get_message
@@ -72,7 +80,7 @@ class Base
   end
 
   def savedb
-    query = "*1\r\n$4\r\nsave\r\n"
+    query = query_string(["save"])
     expected = "+OK\r\n"
     send_message query
     msg = get_message

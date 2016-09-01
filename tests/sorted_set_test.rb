@@ -40,7 +40,7 @@ class SortedsetTest < Base
   def zadd
     answers.each do|set, data|
       data.each do |key, score|
-        q = "*4\r\n$4\r\nzadd\r\n$#{set.length}\r\n#{set}\r\n$#{score.to_s.length}\r\n#{score.to_s}\r\n$#{key.length}\r\n#{key}\r\n"
+        q = query_string(["zadd", set, score, key])
         expected = ":1\r\n"
         send_message q
         msg = get_message
@@ -51,7 +51,7 @@ class SortedsetTest < Base
 
   def zcard
     answers.each do |set, data|
-      q = "*2\r\n$5\r\nzcard\r\n$#{set.length}\r\n#{set}\r\n" 
+      q = query_string(["zcard", set])
       expected = ":#{data.keys.length}\r\n"
       send_message q
       msg = get_message
@@ -64,7 +64,7 @@ class SortedsetTest < Base
       (0..NUMBER_OF_TEST_CASES).each do |i|
         min = -1 * rand(1.2...78778.9).round(6)
         max = rand(1.2...7678778.9).round(6)
-        q = "*4\r\n$6\r\nzcount\r\n$#{set.length}\r\n#{set}\r\n$#{min.to_s.length}\r\n#{min.to_s}\r\n$#{max.to_s.length}\r\n#{max.to_s}\r\n"
+        q = query_string(["zcount", set, min, max])
         res = answers[set].values.select{|k| k if k >= min && k <= max}.length
         expected = ":#{res.to_s}\r\n"
         send_message q
@@ -75,7 +75,7 @@ class SortedsetTest < Base
       (0..10).each do |i|
         min = "-inf"
         max = "+inf"
-        q = "*4\r\n$6\r\nzcount\r\n$#{set.length}\r\n#{set}\r\n$#{min.to_s.length}\r\n#{min.to_s}\r\n$#{max.to_s.length}\r\n#{max.to_s}\r\n"
+        q = query_string(["zcount", set, min, max])
         res = answers[set].values.length
         expected = ":#{res.to_s}\r\n"
         send_message q
@@ -91,7 +91,7 @@ class SortedsetTest < Base
         data.each do |key, score|
           key_exists = rand(0..1)
           key = key_exists ? key : random_string
-          q = "*5\r\n$4\r\nzadd\r\n$#{set.length}\r\n#{set}\r\n$2\r\nxx\r\n$#{score.to_s.length}\r\n#{score.to_s}\r\n$#{key.length}\r\n#{key}\r\n"
+          q = query_string(["zadd", set, "xx", score, key])
           expected = ":0\r\n"
           send_message q
           msg = get_message
@@ -109,7 +109,7 @@ class SortedsetTest < Base
           str = random_string
           tar = key_exists ? key : str
           verdict = data[tar]
-          q = "*6\r\n$4\r\nzadd\r\n$#{set.length}\r\n#{set}\r\n$2\r\nxx\r\n$2\r\nch\r\n$#{score.to_s.length}\r\n#{score.to_s}\r\n$#{tar.length}\r\n#{tar}\r\n"
+          q = query_string(["zadd", set, "xx", "ch", score, tar])
           expected = verdict ? ":1\r\n" : ":0\r\n"
           answers[set][tar] = score
           send_message q
@@ -128,7 +128,7 @@ class SortedsetTest < Base
           str = random_string
           tar = key_exists ? key : str
           verdict = data[tar]
-          q = "*5\r\n$4\r\nzadd\r\n$#{set.length}\r\n#{set}\r\n$2\r\nnx\r\n$#{score.to_s.length}\r\n#{score.to_s}\r\n$#{tar.length}\r\n#{tar}\r\n"
+          q = query_string(["zadd", set, "nx", score, tar])
           expected = verdict ? ":0\r\n" : ":1\r\n"
           answers[set][tar] = score
           send_message q
@@ -147,7 +147,7 @@ class SortedsetTest < Base
           str = random_string
           tar = key_exists ? key : str
           verdict = data[tar]
-          q = "*6\r\n$4\r\nzadd\r\n$#{set.length}\r\n#{set}\r\n$2\r\nnx\r\n$2\r\nch\r\n$#{score.to_s.length}\r\n#{score.to_s}\r\n$#{tar.length}\r\n#{tar}\r\n"
+          q = query_string(["zadd", set, "nx", "ch", score, tar])
           expected = verdict ? ":0\r\n" : ":1\r\n"
           answers[set][tar] = score
           send_message q
@@ -165,7 +165,7 @@ class SortedsetTest < Base
         new_score = rand(1.2...76778.9).round(6)
         final_score = (prev_score + new_score).round(6)
         fin_scr = final_score.to_s + "0"*(6 - final_score.to_s.split('.').last.length)
-        q = "*5\r\n$4\r\nzadd\r\n$#{set.length}\r\n#{set}\r\n$4\r\nincr\r\n$#{new_score.to_s.length}\r\n#{new_score.to_s}\r\n$#{key.length}\r\n#{key}\r\n"
+        q = query_string(["zadd", set, "incr", new_score, key])
         expected = "$#{fin_scr.length}\r\n#{fin_scr}\r\n"
         answers[set][key] = final_score
         send_message q
@@ -183,7 +183,7 @@ class SortedsetTest < Base
         new_score = rand(1.2...76778.9).round(6)
         final_score = (prev_score + new_score).round(6)
         fin_scr = final_score.to_s + "0"*(6 - final_score.to_s.split('.').last.length)
-        q = "*6\r\n$4\r\nzadd\r\n$#{set.length}\r\n#{set}\r\n$2\r\n#{switch}\r\n$4\r\nincr\r\n$#{new_score.to_s.length}\r\n#{new_score.to_s}\r\n$#{key.length}\r\n#{key}\r\n"
+        q = query_string(["zadd", set, switch, "incr", new_score, key])
         if switch == "xx"
           expected = "$#{fin_scr.length}\r\n#{fin_scr}\r\n"
           answers[set][key] = final_score
@@ -206,12 +206,10 @@ class SortedsetTest < Base
         left = left * -1 if rand(0..1)
         right = rand(0..data.size*2)
         right = right * -1 if rand(0..1)
-        sw = "withscores"
         withscore = rand(0..1)
-        len = 4
-        len += 1 if withscore
-        q = "*#{len}\r\n$6\r\nzrange\r\n$#{set.length}\r\n#{set}\r\n$#{left.to_s.length}\r\n#{left.to_s}\r\n$#{right.to_s.length}\r\n#{right.to_s}\r\n"
-        q = q + "$#{sw.length}\r\n#{sw}\r\n" if withscore
+        q = ["zrange", set, left, right]
+        q << "withscores" if withscore
+        q = query_string(q)
         arr = answers[set].to_a.dup
         arr.sort!{|x, y| x.last <=> y.last}
         mems = arr.map{|i| i[0]}

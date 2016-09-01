@@ -19,8 +19,7 @@ class WrongNumberOfArguments < Base
         strs = []
         (0..10).each{|i| strs << random_string}
         strs << "arun" if strs.length == args
-        q = "*#{strs.length+1}\r\n$#{cmd.length}\r\n#{cmd}\r\n"
-        strs.each{|s| q = "#{q}$#{s.length}\r\n#{s}\r\n"}
+        q = query_string([cmd] | strs)
         queries << q
       end
     end
@@ -28,8 +27,7 @@ class WrongNumberOfArguments < Base
     (0..NUMBER_OF_TEST_CASES).each do |i|
       strs = []
       (2..8).each{|i| strs << random_string}
-      q = "*#{strs.length+1}\r\n$3\r\nget\r\n"
-      strs.each{|s| q = "#{q}$#{s.length}\r\n#{s}\r\n"}
+      q = query_string(["get"] | strs)
       queries << q
     end
   end

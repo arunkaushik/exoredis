@@ -9,8 +9,7 @@ class UnknownCommand < Base
     (0..NUMBER_OF_TEST_CASES).each do |i|
       strs = []
       (3..10).each{|i| strs << random_string unless KNOWN_COMMANDS.include?(random_string.downcase)}
-      q = "*#{strs.length}\r\n"
-      strs.each{|s| q = "#{q}$#{s.length}\r\n#{s}\r\n"}
+      q = query_string(strs)
       queries << q
     end
   end

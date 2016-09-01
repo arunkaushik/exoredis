@@ -14,7 +14,7 @@ class IllegalResp < Base
 
     (0..NUMBER_OF_TEST_CASES).each do |i|
       str = random_string
-      q = "*2\r\n$3\r\nget\r\n$#{str.length}\r\n#{str}\r\n"
+      q = query_string(["get", str])
       queries << q
     end
 

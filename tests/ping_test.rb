@@ -11,7 +11,7 @@ class PingTest < Base
   end
 
   def pingtest
-    query = "*1\r\n$4\r\nping\r\n"
+    query = query_string(["ping"])
     (0..NUMBER_OF_TEST_CASES).each do |i|
       expected = "+PONG\r\n"
       send_message query

@@ -29,55 +29,55 @@ class SetTest < Base
   end
 
   def set_with_wrong_args
-    q = "*1\r\n$3\r\nset\r\n"
+    q = query_string(["set"])
     expected = "-ERR wrong number of arguments\r\n"
     send_message q
     msg = get_message
     assert(msg, expected, q)
 
-    q = "*2\r\n$3\r\nset\r\n$3\r\nfoo\r\n"
+    q = query_string(["set", "foo"])
     expected = "-ERR wrong number of arguments\r\n"
     send_message q
     msg = get_message
     assert(msg, expected, q)
 
-    q = "*4\r\n$3\r\nset\r\n$3\r\nfoo\r\n$3\r\nbar\r\n$3\r\nexx\r\n"
+    q = query_string(["set", "foo", "bar", "exx"])
     expected = "-ERR syntax error\r\n"
     send_message q
     msg = get_message
     assert(msg, expected, q)
 
-    q = "*4\r\n$3\r\nset\r\n$3\r\nfoo\r\n$3\r\nbar\r\n$3\r\npxx\r\n"
+    q = query_string(["set", "foo", "bar", "pxx"])
     expected = "-ERR syntax error\r\n"
     send_message q
     msg = get_message
     assert(msg, expected, q)
 
-    q = "*5\r\n$3\r\nset\r\n$3\r\nfoo\r\n$3\r\nbar\r\n$2\r\nex\r\n$2\r\n3e\r\n"
+    q = query_string(["set", "foo", "bar", "ex", "3e"])
     expected = "-ERR value is not an integer or out of range\r\n"
     send_message q
     msg = get_message
     assert(msg, expected, q)
 
-    q = "*7\r\n$3\r\nset\r\n$3\r\nfoo\r\n$3\r\nbar\r\n$2\r\nex\r\n$2\r\n10\r\n$2\r\npx\r\n$2\r\n3e\r\n"
+    q = query_string(["set", "foo", "bar", "ex", "3", "px", "3e"])
     expected = "-ERR value is not an integer or out of range\r\n"
     send_message q
     msg = get_message
     assert(msg, expected, q)
 
-    q = "*7\r\n$3\r\nset\r\n$3\r\nfoo\r\n$3\r\nbar\r\n$2\r\nex\r\n$2\r\n10\r\n$2\r\npx\r\n$2\r\n10\r\n"
+    q = query_string(["set", "foo", "bar", "ex", 1, "px", 3])
     expected = "+OK\r\n"
     send_message q
     msg = get_message
     assert(msg, expected, q)
 
-    q = "*7\r\n$3\r\nset\r\n$3\r\nfoo\r\n$3\r\nbar\r\n$2\r\nex\r\n$1\r\n1\r\n$2\r\npx\r\n$1\r\n1\r\n"
+    q = query_string(["set", "foo", "bar", "ex", 1, "px", 1])
     expected = "+OK\r\n"
     send_message q
     msg = get_message
     assert(msg, expected, q)
 
-    q = "*2\r\n$3\r\nget\r\n$3\r\nfoo\r\n"
+    q = query_string(["get", "foo"])
     expected = "$3\r\nbar\r\n"
     send_message q
     msg = get_message
@@ -87,7 +87,7 @@ class SetTest < Base
     print("Cheking expiry with sleep, hold on")
     sleep(1.5)
 
-    q = "*2\r\n$3\r\nget\r\n$3\r\nfoo\r\n"
+    q = query_string(["get", "foo"])
     expected = "$-1\r\n"
     send_message q
     msg = get_message
@@ -96,44 +96,43 @@ class SetTest < Base
 
   def set_with_nx_xx
     flushdb
-
-    q = "*4\r\n$3\r\nset\r\n$3\r\nfoo\r\n$3\r\nbar\r\n$2\r\nnx\r\n"
+    q = query_string(["set", "foo", "bar", "nx"])
     expected = "+OK\r\n"
     send_message q
     msg = get_message
     assert(msg, expected, q)
 
-    q = "*2\r\n$3\r\nget\r\n$3\r\nfoo\r\n"
+    q = query_string(["get", "foo"])
     expected = "$3\r\nbar\r\n"
     send_message q
     msg = get_message
     assert(msg, expected, q)
 
-    q = "*4\r\n$3\r\nset\r\n$3\r\nfoo\r\n$3\r\nbaz\r\n$2\r\nnx\r\n"
+    q = query_string(["set", "foo", "baz", "nx"])
     expected = "$-1\r\n"
     send_message q
     msg = get_message
     assert(msg, expected, q)
 
-    q = "*4\r\n$3\r\nset\r\n$3\r\nfoo\r\n$3\r\nbaz\r\n$2\r\nxx\r\n"
+    q = query_string(["set", "foo", "baz", "xx"])
     expected = "+OK\r\n"
     send_message q
     msg = get_message
     assert(msg, expected, q)
 
-    q = "*4\r\n$3\r\nset\r\n$3\r\nloo\r\n$3\r\nbaz\r\n$2\r\nxx\r\n"
+    q = query_string(["set", "loo", "baz", "xx"])
     expected = "$-1\r\n"
     send_message q
     msg = get_message
     assert(msg, expected, q)
 
-    q = "*5\r\n$3\r\nset\r\n$3\r\nfoo\r\n$3\r\nbaz\r\n$2\r\nxx\r\n$2\r\nnx\r\n"
+    q = query_string(["set", "loo", "baz", "xx", "nx"])
     expected = "$-1\r\n"
     send_message q
     msg = get_message
     assert(msg, expected, q)
 
-    q = "*8\r\n$3\r\nset\r\n$3\r\nfoo\r\n$3\r\nbar\r\n$2\r\nex\r\n$1\r\n1\r\n$2\r\npx\r\n$1\r\n1\r\n$3\r\nnxx\r\n"
+    q = query_string(["set", "loo", "bar", "ex", 1, "px", 1, "nxx"])
     expected = "-ERR syntax error\r\n"
     send_message q
     msg = get_message
