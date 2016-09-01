@@ -730,6 +730,7 @@ int loadHashMapEntry(FILE *fp, void *buffer){
     fread(buffer, sizeof(char), len, fp);
     str = newString(buffer, len);
     exp_ms = stringToLongLong(str->buf);
+    freeExoString(str);
  
     res = setFromLoad(HASH_TABLE, key, val, exp_ms);
     if(res){
