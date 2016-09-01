@@ -22,6 +22,7 @@ listNode* newNode(exoString *key, exoVal *value){
     if(tmp){
         tmp->key = key;
         tmp->value = value;
+        tmp->expiry = DEFAULT_EXPIRY_MS;
         tmp->next = NULL;
         tmp->prev = NULL;
     }
@@ -135,7 +136,7 @@ exoVal* replaceNodeValue(listNode *node, exoString *newkey, exoVal *newval){
         freeExoString(tmp_k);
         freeExoVal(tmp);
         printf("%s %s\n", GRN "Node value replaced for node with key: " RESET, node->key->buf);
-        return newval;
+        return _OK();
     }
 }
 
@@ -162,4 +163,12 @@ void freeListNode(listNode *node){
     freeExoString(node->key);
     freeExoVal(node->value);
     free(node);
+}
+
+bool isExpired(listNode *node){
+    exoVal *v = (exoVal*)node->value;
+    if(v->ds_type != BULKSTRING){
+        return false;
+    }
+    return node->expiry < timeStamp();
 }

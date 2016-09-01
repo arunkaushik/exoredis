@@ -5,6 +5,7 @@
 typedef struct listNode{
     exoString *key;
     exoVal *value;
+    uint64_t expiry;
     struct listNode *next;
     struct listNode *prev;
 }listNode;
@@ -24,4 +25,5 @@ exoVal* replaceNodeValue(listNode *, exoString *, exoVal *);
 void printList(linkedList *);
 void freeListNode(listNode *);
 void freeLinkedList(linkedList*);
+bool isExpired(listNode *);
 #endif

@@ -58,6 +58,13 @@ class SaveTest < Base
       msg = get_message
       assert(msg, expected, q)
     end
+
+    # save a key to expire early
+    q = "*5\r\n$3\r\nset\r\n$11\r\nspecial_key\r\n$3\r\nbar\r\n$2\r\npx\r\n$4\r\n1000\r\n"
+    expected = "+OK\r\n"
+    send_message q
+    msg = get_message
+    assert(msg, expected, q)
   end
 
   def checkget
@@ -71,6 +78,13 @@ class SaveTest < Base
       msg = get_message
       assert(msg, expected, query)
     end
+
+    print("Checking expired key")
+    q = "*2\r\n$3\r\nget\r\n$11\r\nspecial_key\r\n"
+    expected = "$-1\r\n"
+    send_message q
+    msg = get_message
+    assert(msg, expected, q)
   end
 
   def zadd

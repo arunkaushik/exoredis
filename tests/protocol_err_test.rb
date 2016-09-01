@@ -6,8 +6,7 @@ class IllegalResp < Base
     super
     (0..NUMBER_OF_TEST_CASES).each do |i|
       strs = []
-      (3..10).each{|i| strs << random_string}
-      strs << "arun" if strs.length % 2 == 1
+      (1..2).each{|i| strs << random_string}
       q = "*#{strs.length+1}\r\n$3\r\nset\r\n"
       strs.each{|s| q = "#{q}$#{s.length}\r\n#{s}\r\n"}
       queries << q

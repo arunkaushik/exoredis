@@ -24,6 +24,7 @@ exoVal* setbitCommand(argList*);
 exoVal* delCommand(argList*);
 exoVal* zaddCommand(argList*);
 void parseSwitches(argList*, bool *, bool *, bool *, bool *);
+int parseSetSwitches(argList*, bool *, uint64_t *, bool *, uint64_t *, bool *, bool *);
 exoVal* zcardCommand(argList*);
 exoVal* zcountCommand(argList*);
 exoVal* zrangeCommand(argList*);

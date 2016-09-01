@@ -4,7 +4,6 @@ class WrongNumberOfArguments < Base
 
   COMMANDS = {
     "get" => 1,
-    "set" => 2,
     "ping" => 0,
     "flushall" => 0,
     "getbit" => 2,

@@ -17,7 +17,7 @@ It also folds the function pointers to which command execution shall be dispatch
 // cmd_str, ds_type, args_count, variable_arg_count, skip_arg_test, free_args, f_ptr
 struct exoCmd commandTable[] = {
   {"GET", BULKSTRING, 1, false, false, true, getCommand},
-  {"SET", BULKSTRING, 2, true, false, false, setCommand},
+  {"SET", BULKSTRING, 2, true, true, false, setCommand},
   {"DEL", BULKSTRING, 1, false, true, true, delCommand},
   {"PING", SIMPLE_STRING, 0, false, false, true, pingCommand},
   {"FLUSHALL", SIMPLE_STRING, 0, false, false, true, flushCommand},
@@ -97,19 +97,39 @@ So no need to check the ds_type of target object. Simply over-write
 */
 exoVal* setCommand(argList* args){
     printf(CYN "setCommand Called\n" RESET);
+    if(args->size > 9){
+        return _Error(SYNTAX_ERROR);
+    } else if( args->size < 3){
+        return _Error(WRONG_NUMBER_OF_ARGUMENTS);
+    }
+    unsigned long long exp_ms, ex_v = 0, px_v = 0;
+    bool ex = false, px = false, nx = false, xx = false;
+
+    int sw = parseSetSwitches(args, &ex, &ex_v, &px, &px_v, &nx, &xx);
+    if(sw < 0){
+        return _Error(sw);
+    }
+
+    exp_ms = ex_v * 1000 + px_v;
+
     argListNode* node = args->head->next;
     exoString* key;
     exoVal* val;
-    while(node){
-        key = node->key;
-        val = newExoVal(BULKSTRING, node->next->key);
-        val = set(HASH_TABLE, key, val);
-        if(!val){
-            return _Null();
-        }
-        node = node->next->next;
+
+    if((ex || px) && exp_ms == 0){
+        return _Error(INVALID_EXPIRE_TIME_IN_SET);
+    } else if(nx && xx) {
+        return _Null();
     }
-    return _OK();
+
+    key = node->key;
+    val = newExoVal(BULKSTRING, node->next->key);
+
+    val = setWithExpiry(HASH_TABLE, key, val, exp_ms, nx, xx);
+    if(!val){
+        return _Null();
+    }
+    return val;
 }
 
 /*
@@ -475,8 +495,8 @@ int parseRange(argListNode* args, long long *left, long long *right, bool *withs
         node = node->next;
     }
     if(node){
-        tmp = upCase(node->key);
-        if(strcmp(tmp->buf, "WITHSCORES") == 0){
+        strUpCase(node->key->buf);
+        if(strcmp(node->key->buf, "WITHSCORES") == 0){
             *withscore = true;
         } else {
             return -2; // -ERR syntax error
@@ -484,6 +504,53 @@ int parseRange(argListNode* args, long long *left, long long *right, bool *withs
     }
     return 0;
 }
+
+int parseSetSwitches(argList* args, bool *ex, uint64_t *ex_v, bool *px,\
+                     uint64_t *px_v, bool *nx, bool *xx){
+    argListNode *node = args->head->next->next->next;
+    long long tmp;
+
+    while(node){
+        strUpCase(node->key->buf);
+
+        if(!strcmp(node->key->buf, "EX")){
+            *ex = true;
+            if(node->next){
+                node = node->next;
+                tmp = stringToLongLong(node->key->buf);
+                if(tmp == -1){
+                    return VALUE_IS_NOT_AN_INTEGER_OR_OUT_OF_RANGE;
+                } else {
+                    *ex_v = (uint64_t)MIN(tmp, DEFAULT_EXPIRY_MS);
+                }
+            } else {
+                return SYNTAX_ERROR;
+            }
+        } else if(!strcmp(node->key->buf, "PX")){
+            *px = true;
+            if(node->next){
+                node = node->next;
+                tmp = stringToLongLong(node->key->buf);
+                if(tmp == -1){
+                    return VALUE_IS_NOT_AN_INTEGER_OR_OUT_OF_RANGE;
+                } else {
+                    *px_v = (uint64_t)MIN(tmp, DEFAULT_EXPIRY_MS);
+                }
+            } else {
+                return SYNTAX_ERROR;
+            }
+        } else if(!strcmp(node->key->buf, "NX")){
+            *nx = true;
+        } else if(!strcmp(node->key->buf, "XX")){
+            *xx = true;
+        } else {
+            return SYNTAX_ERROR;
+        }
+        node = node->next;
+    }
+    return 0;
+}
+
 
 /*
 Utility function used by ZRANGE api
@@ -538,6 +605,11 @@ void writeHashMapToFile(listNode *node, FILE *pFile, char *buffer){
 
     // value
     tmp = (exoString*)node->value->val_obj;
+    fwrite(&(tmp->len), sizeof(unsigned long), 1, pFile);
+    fwrite(tmp->buf, sizeof(char), tmp->len, pFile);
+
+    // expiry
+    tmp = llToString(node->expiry);
     fwrite(&(tmp->len), sizeof(unsigned long), 1, pFile);
     fwrite(tmp->buf, sizeof(char), tmp->len, pFile);
 
@@ -636,33 +708,30 @@ int loadFromDB(char *file_path){
 }
 
 int loadHashMapEntry(FILE *fp, void *buffer){
-    argList *tokens = newArgList();
-    exoVal *res;
+    exoVal *res, *val;
     int ret;
     unsigned long len;
-    exoString *str;
-    argListNode *arg;
-
-    str = newString("SET", 3);
-    arg = newArg(str);
-    addArgToList(tokens, arg);
+    uint64_t exp_ms;
+    exoString *str,*key, *tmp;
 
     //key
     fread(&len, sizeof(unsigned long), 1, fp);
     fread(buffer, sizeof(char), len, fp);
-    str = newString(buffer, len);
-    arg = newArg(str);
-    addArgToList(tokens, arg);
+    key = newString(buffer, len);
 
     //value
     fread(&len, sizeof(unsigned long), 1, fp);
     fread(buffer, sizeof(char), len, fp);
-    str = newString(buffer, len);
-    arg = newArg(str);
-    addArgToList(tokens, arg);
+    tmp = newString(buffer, len);
+    val = newExoVal(BULKSTRING, tmp);
 
-    res = setCommand(tokens);
-    freeDeadArgs(tokens);
+    //expiry
+    fread(&len, sizeof(unsigned long), 1, fp);
+    fread(buffer, sizeof(char), len, fp);
+    str = newString(buffer, len);
+    exp_ms = stringToLongLong(str->buf);
+ 
+    res = setFromLoad(HASH_TABLE, key, val, exp_ms);
     if(res){
       str = (exoString*)res->val_obj;
       ret = strcmp("+OK", str->buf) == 0 ?  0 :  -1;  

@@ -24,7 +24,14 @@ exoVal* get(hashTable* ht, exoString* key){
     printf(RED "get Called\n" RESET);
     size_t str_hash = stringHash(key->buf, key->len);
     listNode *node = findNode(ht->buckets[str_hash], key);
-    return node ? node->value : NULL;
+    if(node){
+        if(isExpired(node)){
+            del(ht, key);
+            return NULL;
+        }
+        return node->value;
+    }
+    return NULL;
 }
 
 /*
@@ -46,18 +53,69 @@ exoVal* set(hashTable* ht, exoString* key, exoVal* val){
     }
 }
 
+exoVal* setFromLoad(hashTable* ht, exoString* key, exoVal* val, uint64_t exp_ms){
+    printf(RED "setFromLoad Called\n" RESET);
+    if(exp_ms < timeStamp()){
+        return _OK();
+    }
+    size_t str_hash = stringHash(key->buf, key->len);
+    listNode* node = newNode(key, val);
+    if(addNodeToList(ht->buckets[str_hash], node)){
+        node->expiry = exp_ms;
+        return _OK();
+    } else {
+        return NULL;
+    }
+}
+
+exoVal* setWithExpiry(hashTable* ht, exoString* key, exoVal* val, \
+                        uint64_t exp_ms, bool nx, bool xx){
+    printf(RED "setWithExpiry Called with expiry: " RESET);
+    printf("%llu\n", exp_ms);
+    uint64_t xp = timeStamp();
+    size_t str_hash = stringHash(key->buf, key->len);
+    listNode* node = findNode(ht->buckets[str_hash], key);
+
+    if(node && isExpired(node)){
+        freeListNode(node);
+        node = NULL;
+    }
+    if(node){
+        if(nx){
+            return _Null();
+        } else {
+            node->expiry = exp_ms != 0 ? exp_ms + xp : DEFAULT_EXPIRY_MS;
+            return replaceNodeValue(node, key, val);
+        }
+    } else {
+        if(xx){
+            return _Null();
+        } else {
+            node = newNode(key, val);
+            node->expiry = exp_ms != 0 ? exp_ms + xp : DEFAULT_EXPIRY_MS;
+            if(addNodeToList(ht->buckets[str_hash], node)){
+                return _OK();
+            } else {    
+                return NULL;
+            }
+        }
+    }
+}
+
 /*
 deletes the entry from the given hash_table with specified key
 It does not check for ds_type, simple remove the entry from table
 */
 size_t del(hashTable* ht, exoString* key){
     printf(RED "del Called\n" RESET);
+    bool expired;
     size_t str_hash = stringHash(key->buf, key->len);
     listNode* node = findNode(ht->buckets[str_hash], key);
     if(node){
+        expired = isExpired(node);
         removeNodeFromList(ht->buckets[str_hash], node);
         freeListNode(node);
-        return 1;
+        return expired ? 0 : 1;
     }
     return 0;
 }

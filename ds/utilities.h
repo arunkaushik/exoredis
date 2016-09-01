@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <float.h>
+#include <sys/time.h>
 #include "constants.h"
 
 #define MAX( a, b ) ( ( a > b) ? a : b )
@@ -53,6 +54,7 @@ void freeExoVal(exoVal*);
 exoString* upCase(exoString*);
 void strUpCase(char *);
 exoString* numberToString(unsigned long);
+exoString* llToString(uint64_t);
 long long stringToLongLong(char *);
 int stringToBit(exoString *);
 exoVal* _Error(int);
@@ -61,6 +63,7 @@ exoVal* _OK();
 exoVal* _Pong();
 long double stringTolongDouble(char *);
 exoString* doubleToString(long double);
+uint64_t timeStamp();
 
 argList* newArgList();
 argListNode* newArg(exoString *);

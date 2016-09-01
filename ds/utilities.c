@@ -80,6 +80,11 @@ exoString RET_VALUE_IS_NOT_AN_INTEGER_OR_OUT_OF_RANGE = {
     "-ERR value is not an integer or out of range"
 };
 
+exoString RET_INVALID_EXPIRE_TIME_IN_SET = {
+    31,
+    "-ERR invalid expire time in set"
+};
+
 /*
 exoString is a data_type to store string and its length
 it makes length operation O(1)
@@ -302,6 +307,8 @@ exoVal* _Error(int code){
         return newExoVal(RESP_ERROR, &RET_MIN_OR_MAX_IS_NOT_A_FLOAT);
     case VALUE_IS_NOT_AN_INTEGER_OR_OUT_OF_RANGE:
         return newExoVal(RESP_ERROR, &RET_VALUE_IS_NOT_AN_INTEGER_OR_OUT_OF_RANGE);
+    case INVALID_EXPIRE_TIME_IN_SET:
+        return newExoVal(RESP_ERROR, &RET_INVALID_EXPIRE_TIME_IN_SET);
     }
     return _Null();
 }
@@ -357,6 +364,18 @@ Converts an unsigned long into exostring. Returns NULL if fails
 exoString* numberToString(unsigned long num){
     char buffer [50];
     if(sprintf (buffer, "%lu", num) > 0){
+        return newString(buffer, strlen(buffer));
+    } else {
+        return NULL;
+    }
+}
+
+/*
+Converts an uint64_t into exostring. Returns NULL if fails
+*/
+exoString* llToString(uint64_t num){
+    char buffer [50];
+    if(sprintf (buffer, "%llu", num) > 0){
         return newString(buffer, strlen(buffer));
     } else {
         return NULL;
@@ -448,6 +467,16 @@ long double stringTolongDouble(char *str){
         frac = (double)fraction/frac_len;
     }
     return res + frac;
+}
+
+/*
+* Returns current timestamp in milliseconds
+*/
+uint64_t timeStamp(){
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+
+    return (uint64_t)(tv.tv_sec) * 1000 + (uint64_t)(tv.tv_usec) / 1000;
 }
 
 void setAllDead(argList *list){
