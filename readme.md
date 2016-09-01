@@ -47,7 +47,7 @@ If no file path argument is given, it saves the db in current folder in **data.r
 
 ## Redis Vs Exoredis
 
-Exoredis talks [RESP Protocol](http://redis.io/topics/protocol) fluently, just like redis.
+Exoredis speaks [RESP Protocol](http://redis.io/topics/protocol) fluently, just like redis.
 So it is compatible with clients written for redis.
 I have tested it with redis clients written for ruby, python and nodejs. A reason for redis's
 lightning fast speed is its RESP protocol which allows it to parse incoming byte sequences in an
@@ -58,7 +58,8 @@ and with any other redis client library too in which case it will be more fast.
 A simple benchmark for redis and exoredis (using ruby) gives us following numbers. Each of the following
 commands were executed for 50,000 times (except SAVE) with different arguments. SAVE command is
 triggered last to save current snapshot to rdb file.
-**NOTE:** Time mentioned in below table includes overhead of client & network.
+
+**NOTE:** Time mentioned in below table includes overhead of client.
 
 S No | Command | Redis(seconds) | Exoredis(seconds)
 -----|---------|----------------|--------------------
