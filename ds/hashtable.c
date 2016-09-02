@@ -1,9 +1,9 @@
 #include "hashtable.h"
 
 /*
-returns a new empty hashtable of given size.
-size is the number of buckets in hash_table. 
-Buckets are implemented via linked lists.
+* returns a new empty hashtable of given size.
+* size is the number of buckets in hash_table. 
+* Buckets are implemented via linked lists.
 */
 hashTable* newHashTable(size_t size){
     size_t i;
@@ -18,10 +18,9 @@ hashTable* newHashTable(size_t size){
 }
 
 /*
-gets a value from given hash_table with specific key
+* gets a value from given hash_table with specific key
 */
 exoVal* get(hashTable* ht, exoString* key){
-    printf(RED "get Called\n" RESET);
     size_t str_hash = stringHash(key->buf, key->len);
     listNode *node = findNode(ht->buckets[str_hash], key);
     if(node){
@@ -35,10 +34,9 @@ exoVal* get(hashTable* ht, exoString* key){
 }
 
 /*
-sets a value in given hash_table with specified key, val pair
+* sets a value in given hash_table with specified key, val pair
 */
 exoVal* set(hashTable* ht, exoString* key, exoVal* val){
-    printf(RED "set Called\n" RESET);
     size_t str_hash = stringHash(key->buf, key->len);
     listNode* node = findNode(ht->buckets[str_hash], key);
     if(node){
@@ -53,8 +51,10 @@ exoVal* set(hashTable* ht, exoString* key, exoVal* val){
     }
 }
 
+/*
+* sets a value in given hash_table with specified key, val pair when DB is restored from disk
+*/
 exoVal* setFromLoad(hashTable* ht, exoString* key, exoVal* val, uint64_t exp_ms){
-    printf(RED "setFromLoad Called\n" RESET);
     if(exp_ms < timeStamp()){
         return _OK();
     }
@@ -70,8 +70,6 @@ exoVal* setFromLoad(hashTable* ht, exoString* key, exoVal* val, uint64_t exp_ms)
 
 exoVal* setWithExpiry(hashTable* ht, exoString* key, exoVal* val, \
                         uint64_t exp_ms, bool nx, bool xx){
-    printf(RED "setWithExpiry Called with expiry: " RESET);
-    printf("%llu\n", exp_ms);
     uint64_t xp = timeStamp();
     size_t str_hash = stringHash(key->buf, key->len);
     listNode* node = findNode(ht->buckets[str_hash], key);
@@ -107,7 +105,6 @@ deletes the entry from the given hash_table with specified key
 It does not check for ds_type, simple remove the entry from table
 */
 size_t del(hashTable* ht, exoString* key){
-    printf(RED "del Called\n" RESET);
     bool expired;
     size_t str_hash = stringHash(key->buf, key->len);
     listNode* node = findNode(ht->buckets[str_hash], key);

@@ -13,20 +13,15 @@ It returns NULL which is treated an an ERR message if the passed
 string is illegal according to RESP
 */
 argList* bufferTokenizer(char *str, unsigned long len){
-    // empty string case, return NULL
     if(len < 1) return NULL;
 
     argList* tokens = NULL;
     if(*str == '*'){
         // If it starts with a * it must be a RESP string (from redis client)
-        printf(MAG "-------------------------- RESP TOKENIZER BEGINS ----------------------\n" RESET);
         tokens = respTokenizer(str, len);
-        printf(MAG "-------------------------- RESP TOKENIZER ENDS ------------------------\n" RESET);
     } else {
         // if doesn't starts with a * it must be a simple string (from telnet)
-        printf(MAG "-------------------------- SIMPLE TOKENIZER BEGINS --------------------\n" RESET);
         tokens = simpleTokenizer(str, len);
-        printf(MAG "-------------------------- SIMPLE TOKENIZER ENDS ----------------------\n" RESET);
     }
     return tokens;
 }

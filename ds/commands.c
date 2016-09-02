@@ -40,7 +40,6 @@ to which the task shall be dispatched. If the command is not found, then that co
 is not supported by exoRedis
 */
 hashTable* initializeCmdTable(){
-    printf(CYN "initialized COMMANDS\n" RESET);
     hashTable* commands = newHashTable(INITIAL_SIZE);
     int i, n = sizeof(commandTable)/sizeof(struct exoCmd);
     for (i = 0; i < n; i++) {
@@ -75,7 +74,6 @@ exoCmd* addCommand(hashTable *ht, exoCmd* cmd){
 Entry point for GET api
 */
 exoVal* getCommand(argList* args){
-    printf(CYN "getCommand Called\n" RESET);
     argListNode* node = args->head;
 
     // head holds command node, actual args starts from head->next
@@ -96,7 +94,6 @@ SET command overwirtes the target value if it exists,
 So no need to check the ds_type of target object. Simply over-write
 */
 exoVal* setCommand(argList* args){
-    printf(CYN "setCommand Called\n" RESET);
     if(args->size > 9){
         return _Error(SYNTAX_ERROR);
     } else if( args->size < 3){
@@ -137,7 +134,6 @@ Entry point of DEL api.
 Deletes the entry from the hash table.
 */
 exoVal* delCommand(argList* args){
-    printf(CYN "delCommand Called\n" RESET);
     unsigned long count = 0;
 
     // head holds command node, actual args starts from head->next
@@ -181,7 +177,6 @@ exoVal* getbitCommand(argList* args){
     bitmapNode* node;
     bool result;
     long long pos;
-    printf(CYN "getbitCommand Called\n" RESET);
     argListNode* arg = args->head->next;
     pos = stringToLongLong(arg->next->key->buf);
     if(pos == -1 || pos > OFFSET_MAX){
@@ -211,7 +206,6 @@ exoVal* setbitCommand(argList* args){
     long long pos;
     int bit;
     argListNode* arg = args->head->next;
-    printf(CYN "setbitCommand Called\n" RESET);
 
     pos = stringToLongLong(arg->next->key->buf);
     if(pos == -1 || pos > OFFSET_MAX){
@@ -249,7 +243,6 @@ Entry point of ZADD api.
 Checks of arguments by itself
 */
 exoVal* zaddCommand(argList* args){
-    printf(CYN "zaddCommand Called\n" RESET);
     if(args->size < 4){
         return _Error(WRONG_NUMBER_OF_ARGUMENTS);
     }
@@ -272,10 +265,8 @@ exoVal* zaddCommand(argList* args){
     parseSwitches(args, &xx, &nx, &ch, &incr);
     ret = addToSortedSet(sk_list, xx, nx, ch, incr, args);
     if(sk_list->size == 0){
-        // have to free memory too
         del(HASH_TABLE, arg->key);
     }
-    printSkipList(sk_list);
     return ret;
 }
 
@@ -283,7 +274,6 @@ exoVal* zaddCommand(argList* args){
 Entry point of ZCARD api.
 */
 exoVal* zcardCommand(argList* args){
-    printf(CYN "zcardCommand Called\n" RESET);
     argListNode* arg = args->head->next;
     unsigned long res;
     exoVal* val = get(HASH_TABLE, arg->key);
@@ -305,7 +295,6 @@ exoVal* zcardCommand(argList* args){
 Entry point of ZCOUNT api.
 */
 exoVal* zcountCommand(argList* args){
-    printf(CYN "zcountCommand Called\n" RESET);
     argListNode* arg = args->head->next;
     bool valid_args = false;
     unsigned long res, ma, mi;
@@ -339,7 +328,6 @@ exoVal* zrangeCommand(argList* args){
     if(args->size -1 != 3 && args->size -1 != 4){
         return _Error(WRONG_NUMBER_OF_ARGUMENTS);
     }
-    printf(CYN "zrangeCommand Called\n" RESET);
     argList* result = newArgList();
     argListNode *tmp;
     argListNode* arg = args->head->next;
@@ -349,10 +337,8 @@ exoVal* zrangeCommand(argList* args){
 
     // return error if illegal arguments, else execute command
     valid_args = parseRange(arg->next, &left, &right, &withscore);
-    if(valid_args == -1) {
-        return _Error(VALUE_IS_NOT_AN_INTEGER_OR_OUT_OF_RANGE);
-    } else if(valid_args == -2) {
-        return _Error(SYNTAX_ERROR);
+    if(valid_args < 0) {
+        return _Error(valid_args);
     }
 
     exoVal* val = get(HASH_TABLE, arg->key);
@@ -390,6 +376,7 @@ Entry point of SAVE api.
 */
 exoVal* saveCommand(char *file_path){
     printf("%s\n", "Saving final state of DB on disk.");
+
     linkedList* list = NULL;
     listNode *node = NULL;
     char buffer[800000];
@@ -440,7 +427,6 @@ exoVal* loadCommand(char *file_path){
 Utility function used by ZADD, ZCOUNT api
 */
 void parseSwitches(argList* args, bool *xx, bool *nx, bool *ch, bool *incr){
-    printf(CYN "parseSwitches Called\n" RESET);
     char *str;
     exoString *tmp;
     argListNode *node = args->head->next->next; // move node to third node after cmd and key
@@ -467,7 +453,6 @@ void parseSwitches(argList* args, bool *xx, bool *nx, bool *ch, bool *incr){
 Utility function used by ZCOUNT api
 */
 int parseRange(argListNode* args, long long *left, long long *right, bool *withscore){
-    printf(CYN "parseRange Called\n" RESET);
     argListNode *node = args;
     exoString *tmp;
     bool minus;
@@ -483,7 +468,7 @@ int parseRange(argListNode* args, long long *left, long long *right, bool *withs
         }
         num = stringToLongLong(str);
         if(num == -1){
-            return -1; //-ERR value is not an integer or out of range
+            return VALUE_IS_NOT_AN_INTEGER_OR_OUT_OF_RANGE;
         } else {
             num = minus ? -1 * num : num;
             if(count == 0)
@@ -499,7 +484,7 @@ int parseRange(argListNode* args, long long *left, long long *right, bool *withs
         if(strcmp(node->key->buf, "WITHSCORES") == 0){
             *withscore = true;
         } else {
-            return -2; // -ERR syntax error
+            return SYNTAX_ERROR;
         }
     }
     return 0;
@@ -556,7 +541,6 @@ int parseSetSwitches(argList* args, bool *ex, uint64_t *ex_v, bool *px,\
 Utility function used by ZRANGE api
 */
 bool parseMinMax(argListNode* args, long double *left, long double *right){
-    printf(CYN "parseMinMax Called\n" RESET);
     argListNode *node = args;
     bool minus;
     long double score;

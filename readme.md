@@ -75,6 +75,8 @@ S No | Command | Redis(seconds) | Exoredis(seconds)
 
 ## Limitations
 1. Decimal precision **Redis: 16** and **Exoredis: 6**
-2. No memory compression in Exoredis, so if you create bitmap with farthest bit( at position 4294967295) being set to 1 it will consume 512mb of memory. It is similar to Redis (refer [SETBIT](http://redis.io/commands/setbit) ). However, Redis compresses the memory while writing the DB on disk, while Exoredis
+2. Input buffer size is capped at 1mb, if request size from client exceeds 1mb, protocol error will be 
+returned (can be improved to make configurable).
+3. No memory compression in Exoredis, so if you create bitmap with farthest bit( at position 4294967295) being set to 1 it will consume 512mb of memory. It is similar to Redis (refer [SETBIT](http://redis.io/commands/setbit) ). However, Redis compresses the memory while writing the DB on disk, while Exoredis
 does not compress the memory. DB file will consume 512mb space on disk too.
-3. If you find any bug :neutral_face: please let me know :grin:
+4. If you find any bug :neutral_face: please let me know :grin:

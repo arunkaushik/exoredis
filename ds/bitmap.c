@@ -37,7 +37,6 @@ bitmapNode* initBitmapNode(long long pos, bool bit){
 returns the bit stored in node at given position
 */
 bool getBit(bitmapNode* node, long long pos){
-    printf(RED "GETBIT CALLED\n" RESET);
     if(pos < node->len * BITS_PER_WORD){
         return getbitUtility(node->mem, pos);
     } else {
@@ -49,7 +48,6 @@ bool getBit(bitmapNode* node, long long pos){
 sets the bit stored in node at given position to value passed in bit(0 or 1)
 */
 bool setBit(bitmapNode* node, long long pos, bool bit){
-    printf(RED "SETBIT CALLED\n" RESET);
     unsigned long len = word_offset(pos);
     void *new_start;
     bool ret;

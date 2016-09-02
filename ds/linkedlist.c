@@ -1,7 +1,7 @@
 #include "linkedlist.h"
 
 /*
-returns a new empty linked list
+* returns a new empty linked list
 */
 linkedList* newLinkedList(){
     linkedList* ll = (linkedList*)malloc(sizeof(linkedList));
@@ -10,12 +10,11 @@ linkedList* newLinkedList(){
         ll->tail = NULL;
         ll->size = 0;
     }
-    printf(GRN "new linkedList created\n" RESET);
     return ll;
 }
 
 /*
-return a new list node with given key value pair
+* return a new list node with given key value pair
 */
 listNode* newNode(exoString *key, exoVal *value){
     listNode* tmp = (listNode*)malloc(sizeof( listNode));
@@ -26,16 +25,14 @@ listNode* newNode(exoString *key, exoVal *value){
         tmp->next = NULL;
         tmp->prev = NULL;
     }
-    printf("%s %s\n", GRN "new listNode created with key: " RESET, key->buf);
     return tmp;
 }
 
 /*
-adds list node to the given list
+* adds list node to the given list
 */
 listNode* addNodeToList(linkedList *list, listNode *node){
     if(list == NULL || node == NULL){
-        printf(GRN "node NOT added to List\n" RESET);
         return NULL;
     } else {
         if(list->head){
@@ -47,18 +44,16 @@ listNode* addNodeToList(linkedList *list, listNode *node){
             list->tail = list->head;
         }
         list->size++;
-        printf("%s %s\n", GRN "node with key added to List : " RESET, node->key->buf);
         return node;
     } 
 }
 
 /*
-Remove and returns the node from the list. It does not frees the memory of the node.
-Freeing memory to be handled by the calling function
+* Remove and returns the node from the list. It does not frees the memory of the node.
+* Freeing memory to be handled by the calling function
 */
 listNode* removeNodeFromList(linkedList *list, listNode *node){
     if(list == NULL || node == NULL){
-        printf(GRN "node NOT Removed from List\n" RESET);
         return NULL;
     } else {
         if(list->size == 1){
@@ -77,14 +72,13 @@ listNode* removeNodeFromList(linkedList *list, listNode *node){
             }
         }
         list->size--;
-        printf("%s %s\n", GRN "node with key removed from the List : " RESET, node->key->buf);
         return node;
     } 
 }
 
 /*
-prints the list with its size to STDOUT
-Values are printed only if they are exoString, otherwise only key is printed
+* prints the list with its size to STDOUT
+* Values are printed only if they are exoString, otherwise only key is printed
 */
 void printList(linkedList *list){
     listNode *tmp = list->head;
@@ -103,7 +97,7 @@ void printList(linkedList *list){
 }
 
 /*
-finds a node with specific key in given list 
+* finds a node with specific key in given list 
 */
 listNode* findNode(linkedList *list, exoString *key){
     listNode* tmp = list->head;
@@ -113,18 +107,16 @@ listNode* findNode(linkedList *list, exoString *key){
         }
         tmp = tmp->next;
     }
-    printf("%s %s\n", GRN "node find called with key: " RESET, key->buf);
     return NULL;
 }
 
 /*
-replaces the value in a given list node with new value.
-value is a object of exoVal data type
+* replaces the value in a given list node with new value.
+* value is a object of exoVal data type
 */
 exoVal* replaceNodeValue(listNode *node, exoString *newkey, exoVal *newval){
     if(node == NULL || newval == NULL){
         return NULL;
-        printf(GRN "node value Not replaced\n" RESET);
     } else {
         exoVal *tmp;
         exoString *tmp_k;
@@ -135,13 +127,12 @@ exoVal* replaceNodeValue(listNode *node, exoString *newkey, exoVal *newval){
         
         freeExoString(tmp_k);
         freeExoVal(tmp);
-        printf("%s %s\n", GRN "Node value replaced for node with key: " RESET, node->key->buf);
         return _OK();
     }
 }
 
 /*
-frees all the memory holded my given linkedlist
+* frees all the memory holded my given linkedlist
 */
 void freeLinkedList(linkedList* list){
     if(list == NULL) return;
@@ -156,7 +147,7 @@ void freeLinkedList(linkedList* list){
 }
 
 /*
-frees the memory holded by given listnode
+* frees the memory holded by given listnode
 */
 void freeListNode(listNode *node){
     if(node == NULL) return;
@@ -165,6 +156,9 @@ void freeListNode(listNode *node){
     free(node);
 }
 
+/*
+* Returns true if node has expired, false otherwise
+*/
 bool isExpired(listNode *node){
     exoVal *v = (exoVal*)node->value;
     if(v->ds_type != BULKSTRING){

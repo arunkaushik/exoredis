@@ -309,7 +309,6 @@ exoVal* executeCommand(exoCmd* cmd, argList* tokens){
 * and return proper error in case of illegal arguments been passed
 */
 bool validArgs(size_t arg_count, unsigned long args_passed, bool variable_args){
-    printf("%s %zu %lu\n", WHT "validArgs called with: " RESET, arg_count, args_passed);
     if(arg_count == args_passed){
         return true;
     } else if(args_passed && variable_args){

@@ -97,8 +97,7 @@ exoString* newString(void *source, unsigned long len){
             memcpy(str->buf, source, len);
         }
         // every exoString terminates with \0 character
-        str->buf[len] = '\0';
-        printf("%s %s %lu\n", YEL "new exoString created: " RESET, str->buf, str->len); 
+        str->buf[len] = '\0'; 
     }
     return str;
 }
@@ -113,7 +112,6 @@ exoVal* newExoVal(size_t ds_type, void *obj){
     if(val){
         val->ds_type = ds_type;
         val->val_obj = obj;
-        printf(YEL "new exoVal created\n" RESET); 
     }
     return val;
 }
@@ -131,7 +129,6 @@ argList* newArgList(){
         ll->tail = NULL;
         ll->size = 0;
     }
-    printf(GRN "new argList created\n" RESET);
     return ll;
 }
 
@@ -145,7 +142,6 @@ argListNode* newArg(exoString *key){
         tmp->dead = false;
         tmp->next = NULL;
     }
-    printf("%s %s\n", GRN "new argListNode created with key: " RESET, key->buf);
     return tmp;
 }
 
@@ -154,7 +150,6 @@ adds argument node to the args list
 */
 argListNode* addArgToList(argList *list, argListNode *node){
     if(list == NULL || node == NULL){
-        printf(GRN "node NOT added to List\n" RESET);
         return NULL;
     } else {
         if(list->head){
@@ -165,7 +160,6 @@ argListNode* addArgToList(argList *list, argListNode *node){
             list->tail = list->head;
         }
         list->size++;
-        printf("%s %s\n", GRN "Arg with key added to List : " RESET, node->key->buf);
         return node;
     } 
 }
@@ -248,8 +242,6 @@ size_t stringHash(char *string, unsigned long len){
         c = string[pos];
         hash = ((hash << 5) + hash) + c;
     }
-
-    printf("%s %s %zu\n", YEL "string hash calculated for str: " RESET, str, hash % INITIAL_SIZE);
     return hash % INITIAL_SIZE;
 }
 
@@ -277,7 +269,7 @@ Function takes in a parameter code and return corresponding err exoString.
 It is one place to get result string for errored out cases.
 */
 exoVal* _Error(int code){
-    printf("%s %d\n", YEL "_Error Called with code: " RESET, code );
+    //printf("%s %d\n", YEL "_Error Called with code: " RESET, code );
     switch(code){
     case COMMAND_NOT_FOUND:
         return newExoVal(RESP_ERROR, &RET_COMMAND_NOT_FOUND);
@@ -341,7 +333,6 @@ Upper_case and Mixed_case scenerios
 */
 exoString* upCase(exoString* str){
     strUpCase(str->buf);
-    printf("%s %s\n", YEL "cmd str Upcased called with: " RESET, str->buf);
     return str;
 }
 
