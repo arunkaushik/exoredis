@@ -2,7 +2,7 @@
 #define CONSTANTS_H_
 
 #define SERVER_PORT 15000
-#define INITIAL_SIZE 32
+#define INITIAL_SIZE 2048
 #define OFFSET_MAX 4294967295
 #define FAILURE -1
 #define SUCCESS 1
