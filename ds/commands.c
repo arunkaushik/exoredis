@@ -99,7 +99,7 @@ exoVal* setCommand(argList* args){
     } else if( args->size < 3){
         return _Error(WRONG_NUMBER_OF_ARGUMENTS);
     }
-    unsigned long long exp_ms, ex_v = 0, px_v = 0;
+    uint64_t exp_ms, ex_v = 0, px_v = 0;
     bool ex = false, px = false, nx = false, xx = false;
 
     int sw = parseSetSwitches(args, &ex, &ex_v, &px, &px_v, &nx, &xx);
