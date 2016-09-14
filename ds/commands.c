@@ -659,7 +659,11 @@ int loadFromDB(char *file_path){
     exoString *key, *tmp;
     exoVal *val;
     // allocalte 520mb for buffer
-    void *buffer = malloc(sizeof(char) * 1024 * 1024 * 520);
+    void *buffer = malloc(sizeof(char) * 1024 * 1024 * 515);
+    if(!buffer){
+        printf(RED "NOT ENOUGH MEMORY\n" RESET);
+        return -1;
+    }
 
     unsigned long len = 0;
     unsigned long code;
