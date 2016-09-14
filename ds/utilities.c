@@ -366,7 +366,7 @@ Converts an uint64_t into exostring. Returns NULL if fails
 */
 exoString* llToString(uint64_t num){
     char buffer [50];
-    if(sprintf (buffer, "%llu", num) > 0){
+    if(sprintf (buffer, "%llu", (unsigned long long)num) > 0){
         return newString(buffer, strlen(buffer));
     } else {
         return NULL;
