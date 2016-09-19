@@ -69,7 +69,10 @@ bool setBit(bitmapNode* node, long long pos, bool bit){
     return ret;
 }
 
-int loadBitmap(exoString *key, void *source, unsigned long len){
+/*
+utility funtion used to load bitmap from disk
+*/
+int loadBitmap(exoString *key, FILE *fp, unsigned long len){
     bitmapNode *node = newBitmapNode();
     exoVal *val = NULL, *res;
     exoString *str;
@@ -78,7 +81,7 @@ int loadBitmap(exoString *key, void *source, unsigned long len){
         node->len = len;
         node->mem = malloc(sizeof(word_t) * len);
         if(node->mem){
-            memcpy(node->mem, source, sizeof(word_t) * len);
+            fread(node->mem, sizeof(word_t), len, fp);
             val = newExoVal(BITMAP, node);
             if(!set(HASH_TABLE, key, val)){
                 ret = -1;

@@ -58,7 +58,7 @@ int spinServer(){
     if(loadFromDB(DB_FILE_PATH) != -1){
         printf("%s\n", "DB load Successfull.");
     } else {
-        printf("%s\n", "DB load Failed.");
+        printf("%s\n", "DB load Failed. Probable reason can be insufficient memory to hold complete DB snapshot that may contain large bitmaps");
     }
     printf("%s\n", "Server is ready and accepting connections on port 15000.");
     run();

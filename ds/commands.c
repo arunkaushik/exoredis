@@ -659,7 +659,7 @@ int loadFromDB(char *file_path){
     exoString *key, *tmp;
     exoVal *val;
     // allocalte 520mb for buffer
-    void *buffer = malloc(sizeof(char) * 1024 * 1024 * 515);
+    void *buffer = malloc(sizeof(char) * 1024 * 1024 * 2);
     if(!buffer){
         printf(RED "NOT ENOUGH MEMORY\n" RESET);
         return -1;
@@ -785,7 +785,5 @@ int loadBitmapEntry(FILE *fp, void *buffer){
 
     //memory
     fread(&len, sizeof(unsigned long), 1, fp);
-    fread(buffer, sizeof(word_t), len, fp);
-
-    return loadBitmap(key, buffer, len);
+    return loadBitmap(key, fp, len);
 }
